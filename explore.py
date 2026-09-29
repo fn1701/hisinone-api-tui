@@ -485,6 +485,15 @@ CUSTOM_COLUMNS = [
 ]
 
 
+NAV_COLS = {"Ebene", "Aktionen", ""}
+
+
+def is_data_table(table: dict) -> bool:
+    """False fuer reine Navigations-Baeume (z.B. Vorlesungsverzeichnis: nur
+    Ebene, Titel, Aktionen) - die bleiben in der Link-Ansicht."""
+    return len([c for c in table["cols"] if c not in NAV_COLS]) > 1
+
+
 def add_custom_columns(table: dict) -> None:
     """Berechnet die passenden eigenen Spalten in die Zeilen; Namen in table["custom"]."""
     table["custom"] = []

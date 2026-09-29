@@ -32,7 +32,8 @@ Bedienung:
                     (Tasten wie l sind in der Config unter "shortcuts" einstellbar)
     q               beenden
 
-Tabellen: Seiten mit Baum-Tabelle (Leistungen, Vorlesungsverzeichnis, ...)
+Tabellen: Seiten mit Daten-Baumtabelle (Leistungen, ...; reine Navigations-
+baeume wie das Vorlesungsverzeichnis bleiben Links)
 oeffnen zusaetzlich alle Tabellen auf einem Bildschirm (Esc = zurueck zu den
 Links). Gibt es genau einen "Alle aufklappen"-Button, wird er einmal geklickt
 (1 Request). Klick auf die Titelleiste oder f = Tabelle im Vollbild, dort:
@@ -77,7 +78,7 @@ from textual.widgets import (DataTable, Footer, Header, Input, OptionList, Selec
 from textual.widgets.option_list import Option
 
 from explore import (LEISTUNGEN_PATH, TREE_TABLE, clean_url, copy_external, expand_tree_tables,
-                     export_leistungen, extract_links, filter_suggestions,
+                     export_leistungen, extract_links, filter_suggestions, is_data_table,
                      latest_attempts_tree, link_name, login, match_rows, pacer, page_title,
                      parse_tree_tables, prepare_save_dir, save_html, tree_order)
 from hisinone_noten import HISinOneClient, HISinOneError
@@ -679,7 +680,8 @@ class ExploreApp(App):
         self.call_from_thread(self.show_page, clean_url(url), name, resp.url, resp.text, push)
         # Seiten mit Baum-Tabelle (Leistungen, VV, ...) zusaetzlich als Tabelle,
         # wenn moeglich einmal "Alle aufklappen" (wie ein Klick im Browser)
-        if TREE_TABLE.search(resp.text):
+        # reine Navigations-Baeume (nur Ebene/Titel/Aktionen) wie bisher nur als Links
+        if TREE_TABLE.search(resp.text) and any(map(is_data_table, parse_tree_tables(resp.text))):
             try:
                 tables, tree_html = expand_tree_tables(self.session, resp.url, resp.text,
                                                        self.client.timeout)
