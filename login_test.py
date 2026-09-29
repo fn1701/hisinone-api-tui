@@ -23,35 +23,34 @@ Ergebnis
 
 import sys
 
-from hisinone_noten import HISinOneClient, HISinOneError
+import requests
+
+from hisinone.noten import HISinOneAuthError, HISinOneClient, HISinOneError
+from hisinone.noten.client import START_PAGE
+
+
+def print_start_page(client: HISinOneClient) -> None:
+    """Diagnose vor dem Login: erreichbar? ajax-token vorhanden?"""
+    start = client.new_session().get(client.qis_base + START_PAGE, timeout=client.timeout)
+    print(f"Startseite: HTTP {start.status_code} -> {start.url}")
+    print(f"ajax-token gefunden: {'ja' if client.find_ajax_token(start.text) else 'nein'}")
 
 
 def main() -> int:
     try:
-        c = HISinOneClient.from_env()
-    except HISinOneError as e:
-        print(f"Fehler: {e}", file=sys.stderr)
+        client = HISinOneClient.from_env()
+    except HISinOneError as error:
+        print(f"Fehler: {error}", file=sys.stderr)
         return 1
-
-    s = c._new_session()
-    start = s.get(f"{c.qis_base}/pages/cs/sys/portal/hisinoneStartPage.faces",
-                  timeout=c.timeout)
-    print(f"Startseite: HTTP {start.status_code} -> {start.url}")
-    token = c._find_ajax_token(start.text)
-    print(f"ajax-token gefunden: {'ja' if token else 'nein'}")
-
-    r = s.post(f"{c.qis_base}/rds?state=user&type=1&category=auth.login",
-               data={"userInfo": "", "ajax-token": token,
-                     "asdf": c.username, "fdsa": c.password, "submit": ""},
-               headers={"Origin": c.base_url, "Referer": start.url},
-               timeout=c.timeout)
-    print(f"Login-POST: HTTP {r.status_code} -> {r.url}")
-
-    if "abmelden" in r.text.lower():
-        print("Login OK")
-        return 0
-    print("Login FAILED")
-    return 1
+    print_start_page(client)
+    try:
+        response = client.login(client.new_session())
+    except (HISinOneAuthError, requests.RequestException):
+        print("Login FAILED")
+        return 1
+    print(f"Login-POST: HTTP {response.status_code} -> {response.url}")
+    print("Login OK")
+    return 0
 
 
 if __name__ == "__main__":

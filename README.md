@@ -64,18 +64,20 @@ dagegen sofort abbrichst, weil ein Retry da zwecklos ist:
 import time
 from hisinone_noten import HISinOneClient, HISinOneError, HISinOneAuthError
 
+
 def noten_mit_wiederholung(versuche=5, pause=10):
     client = HISinOneClient.from_env()
     for i in range(1, versuche + 1):
         try:
             return client.get_grades()
         except HISinOneAuthError:
-            raise                      # falsches Passwort -> nicht wiederholen
+            raise  # falsches Passwort -> nicht wiederholen
         except HISinOneError as e:
             if i == versuche:
-                raise                  # nach dem letzten Versuch aufgeben
+                raise  # nach dem letzten Versuch aufgeben
             print(f"Versuch {i} fehlgeschlagen ({e}). Warte {pause}s ...")
             time.sleep(pause)
+
 
 daten = noten_mit_wiederholung()
 print(daten["zusammenfassung"])
@@ -110,7 +112,7 @@ git clone https://github.com/Dirtez03/hisinone-noten-api.git
 cd hisinone-noten-api
 ```
 
-(Oder einfach die Datei `hisinone_noten.py` in dein Projekt kopieren.)
+(Oder einfach den Ordner `hisinone/noten` in dein Projekt kopieren und `from hisinone.noten import HISinOneClient` nutzen.)
 
 **2. Abhängigkeit installieren**
 
@@ -243,16 +245,21 @@ daten = HISinOneClient.from_env().get_grades()
 
 # nur echte Prüfungsleistungen (Art == "PL"), bestanden mit Note
 bestanden = [
-    p for p in daten["pruefungen"]
-    if p["art"] == "PL" and p["status"] == "BE" and p["note"]
+    p for p in daten["pruefungen"] if p["art"] == "PL" and p["status"] == "BE" and p["note"]
 ]
 
+
 # Notendurchschnitt selbst über gewichtete Credits rechnen
-def note(p): return float(p["note"].replace(",", "."))
-def cp(p):   return float((p["credits"] or "0").replace(",", "."))
+def note(p):
+    return float(p["note"].replace(",", "."))
+
+
+def cp(p):
+    return float((p["credits"] or "0").replace(",", "."))
+
 
 gewichtet = sum(note(p) * cp(p) for p in bestanden)
-summe_cp  = sum(cp(p) for p in bestanden)
+summe_cp = sum(cp(p) for p in bestanden)
 print("Eigener Schnitt:", round(gewichtet / summe_cp, 2) if summe_cp else "-")
 ```
 
