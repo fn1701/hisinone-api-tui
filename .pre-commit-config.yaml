@@ -1,0 +1,53 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+# Setup: pre-commit install   |   all files: pre-commit run --all-files
+repos:
+  # renovate: datasource=github-tags depName=pre-commit/pre-commit-hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-ast
+      - id: check-merge-conflict
+      - id: check-added-large-files
+      - id: debug-statements
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: forbid-new-submodules
+  # renovate: datasource=github-tags depName=editorconfig-checker/editorconfig-checker.python
+  - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
+    rev: 3.11.1 # pick a git hash / tag to point to
+    hooks:
+      - id: editorconfig-checker
+        alias: ec
+        # Einrueckung prueft ruff; Ausrichtung in Docstrings/README ist kein Fehler
+        args: [-disable-indent-size]
+  # renovate: datasource=github-tags depName=astral-sh/ruff-pre-commit
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.9
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+  # Style guide limits (CLAUDE.md): files <= 150 lines, methods <= 20 code lines
+  - repo: local
+    hooks:
+      - id: check-lengths
+        name: file and method length limits
+        entry: python3 tools/check_lengths.py
+        language: system
+        types: [python]
+      - id: forbid-personal-data
+        name: no .env, saved pages or exports
+        entry: "never commit .env, saved HTML pages or CSV/JSON exports (personal data)"
+        language: fail
+        files: '(^|/)\.env$|\.(html|csv)$|^(?!\.).*\.json$'
+  # renovate: datasource=github-tags depName=Yelp/detect-secrets
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        exclude: '\.env\.example$'
