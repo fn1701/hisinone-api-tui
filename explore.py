@@ -507,13 +507,19 @@ def add_custom_columns(table: dict) -> None:
             table["custom"].append(name)
 
 
+def can_expand_all(html: str) -> bool:
+    """Genau ein "Alle aufklappen" (VV hat je Knoten einen -> nicht klicken)."""
+    return len(set(EXPAND_ALL_BTN.findall(html))) == 1
+
+
 def expand_tree_tables(s: requests.Session, page_url: str, html: str,
-                       timeout: int) -> tuple[list[dict], str]:
-    """Baum-Tabellen der Seite, falls moeglich per "Alle aufklappen" (1 Request).
-    Liefert (Tabellen, HTML das angezeigt wurde - Seite oder Fragment)."""
+                       timeout: int, expand: bool = True) -> tuple[list[dict], str]:
+    """Baum-Tabellen der Seite, falls moeglich (und expand) per "Alle
+    aufklappen" (1 Request). Liefert (Tabellen, HTML das angezeigt wurde -
+    Seite oder Fragment)."""
     tables = parse_tree_tables(html)
     btns = set(EXPAND_ALL_BTN.findall(html))
-    if not tables or len(btns) != 1:
+    if not tables or not expand or len(btns) != 1:
         return tables, html
     btn = btns.pop()
     form = next((f for f in re.findall(r'<form\b[^>]*\bid="([^"]*)"', html)

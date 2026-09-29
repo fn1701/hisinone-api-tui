@@ -25,6 +25,8 @@ Bedienung:
     b r h           zurueck / neu laden / Startseite
     t a             Baum an/aus / alphabetisch an/aus
     c               URL (markierter Link, sonst Seite) in die Zwischenablage
+    v               Seite mit Baum-Tabelle: Tabellen-Ansicht / nur Links umschalten
+                    (gemerkt in der Config unter "pages")
     o               URL im Browser oeffnen (neue Browser-Sitzung, ohne Login!)
     s               Speichern an/aus (Ordner aus --save, sonst /tmp/hisinone-explore;
                     beim Einschalten wird die aktuelle Seite gleich gespeichert)
@@ -46,8 +48,9 @@ Links). Gibt es genau einen "Alle aufklappen"-Button, wird er einmal geklickt
     v               nur letzter Versuch (nur Leistungen)
     e               Export der sichtbaren Zeilen/Spalten (.csv/.json)
 
-Einstellungen (Baum, alphabetisch, Speichern an/aus + Ordner, je Tabelle
-Spalten/eigene Spalten/letzter Versuch/Filter) stehen in
+Einstellungen (Baum, alphabetisch, Speichern an/aus + Ordner, Shortcuts, je
+Seite mit Baum-Tabelle view/expand/open_table und je Tabelle Spalten/eigene
+Spalten/letzter Versuch/Filter) stehen in
 ~/.config/hisinone-explore/config.json (0600, enthaelt ggf. Filter mit
 Modulnamen). Gelesen beim Start; geschrieben beim Beenden und alle 100 s,
 aber nur wenn sich etwas geaendert hat. Angegebene Optionen (--flat, --sort,
@@ -78,7 +81,8 @@ from textual.widgets import (DataTable, Footer, Header, Input, OptionList, Selec
 from textual.widgets.option_list import Option
 
 from explore import (LEISTUNGEN_PATH, TREE_TABLE, clean_url, copy_external, expand_tree_tables,
-                     export_leistungen, extract_links, filter_suggestions, is_data_table,
+                     can_expand_all, export_leistungen, extract_links, filter_suggestions,
+                     is_data_table,
                      latest_attempts_tree, link_name, login, match_rows, pacer, page_title,
                      parse_tree_tables, prepare_save_dir, save_html, tree_order)
 from hisinone_noten import HISinOneClient, HISinOneError
@@ -114,10 +118,17 @@ class TableBar(Horizontal):
             self.screen.open_single(self.index)
 
 
-# Spaltenauswahl je Tabelle (Name + Original-Spalten), solange die TUI laeuft
-# Einstellungen je Tabelle (Spalten, eigene Spalten, letzter Versuch, Filter),
-# Schluessel "Name [Spalte,Spalte,...]"; wird aus der Config geladen/gespeichert
-TABLE_PREFS: dict[str, dict] = {}
+# Gelernte Seiten mit Baum-Tabelle (Config "pages"), Schluessel = stabile URL:
+#   {"name": ..., "view": "table" | "tree", "expand": bool, "open_table": "",
+#    "tables": {"Name [Spalte,...]": {"cols", "custom_on", "latest", "filter"}}}
+# Die Entscheidungen werden beim ersten Besuch erkannt und eingetragen, danach
+# gilt, was in der Config steht (Benutzer kann sie dort oder per Taste aendern):
+#   view        table = Tabellen-Ansicht, tree = nur Links (reine Navigationsbaeume)
+#   expand      einmal "Alle aufklappen" klicken (nur wenn es genau einen gibt)
+#   open_table  diese Tabelle (Name) gleich im Vollbild oeffnen, "" = alle zeigen
+PAGES: dict[str, dict] = {}
+# alte Config (Tabellen ohne Seite): beim ersten Treffer in die Seite uebernehmen
+LEGACY_TABLES: dict[str, dict] = {}
 
 CONFIG_PATH = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") \
     / "hisinone-explore" / "config.json"
@@ -191,14 +202,17 @@ class TreeTableScreen(Screen):
     """
     MIN_ROWS = 10
 
-    def __init__(self, name: str, tables: list[dict], single: bool = False):
+    def __init__(self, name: str, tables: list[dict], single: bool = False,
+                 prefs: dict | None = None):
         super().__init__()
         self.page_name, self.tables, self.single = name, tables, single
+        # Tabellen-Einstellungen dieser Seite (Objekt aus PAGES, wird direkt geaendert)
+        self.prefs = {} if prefs is None else prefs
         if single:
             t = tables[0]
             self.native, self.custom = t["cols"], t.get("custom", [])
             self.choice_key = f"{table_name(t)} [{','.join(self.native)}]"
-            prefs = TABLE_PREFS.get(self.choice_key, {})
+            prefs = self.prefs.get(self.choice_key, {})
             known = self.native + self.custom
             self.col_choice = [c for c in prefs.get("cols", known) if c in known] or known
             self.custom_on = bool(prefs.get("custom_on")) and bool(self.custom)
@@ -322,9 +336,9 @@ class TreeTableScreen(Screen):
         # Standardzustand nicht speichern (blosses Oeffnen ist keine Aenderung)
         if prefs == {"cols": self.native + self.custom, "custom_on": False,
                      "latest": False, "filter": ""}:
-            TABLE_PREFS.pop(self.choice_key, None)
+            self.prefs.pop(self.choice_key, None)
         else:
-            TABLE_PREFS[self.choice_key] = prefs
+            self.prefs[self.choice_key] = prefs
         rows = latest_attempts_tree(t["rows"]) if self.latest else t["rows"]
         self.shown_rows = match_rows(rows, self.filter_cols(),
                                      self.query_one("#rowfilter", Input).value)
@@ -430,7 +444,8 @@ class TreeTableScreen(Screen):
         self.app.pop_screen()
 
     def open_single(self, index: int) -> None:
-        self.app.push_screen(TreeTableScreen(self.page_name, [self.tables[index]], single=True))
+        self.app.push_screen(TreeTableScreen(self.page_name, [self.tables[index]], single=True,
+                                             prefs=self.prefs))
 
     def action_fullscreen(self) -> None:
         tables = list(self.query(DataTable))
@@ -537,6 +552,7 @@ class ExploreApp(App):
         Binding("a", "toggle_sort", "Alphabetisch an/aus", show=False),
         Binding("exclamation_mark", "force_open", "Trotzdem oeffnen", show=False),
         Binding("c", "copy_url", "URL kopieren"),
+        Binding("v", "toggle_view", "Tabelle/Links", show=False),
         Binding("o", "browser", "Im Browser oeffnen", show=False),
         Binding("s", "toggle_save", "Speichern an/aus", show=False),
         Binding("escape", "focus_tree", "", show=False),
@@ -614,7 +630,8 @@ class ExploreApp(App):
 
     def config_snapshot(self) -> dict:
         return {"tree": self.tree_mode, "sort": self.sort, "save_on": bool(self.save_dir),
-                "save_path": self.save_path, "shortcuts": self.shortcuts, "tables": TABLE_PREFS}
+                "save_path": self.save_path, "shortcuts": self.shortcuts, "pages": PAGES,
+                **({"tables": LEGACY_TABLES} if LEGACY_TABLES else {})}
 
     def save_config(self) -> None:
         """Nur schreiben, wenn sich seit dem letzten Schreiben etwas geaendert hat."""
@@ -680,31 +697,73 @@ class ExploreApp(App):
         self.call_from_thread(self.show_page, clean_url(url), name, resp.url, resp.text, push)
         # Seiten mit Baum-Tabelle (Leistungen, VV, ...) zusaetzlich als Tabelle,
         # wenn moeglich einmal "Alle aufklappen" (wie ein Klick im Browser)
-        # reine Navigations-Baeume (nur Ebene/Titel/Aktionen) wie bisher nur als Links
-        if TREE_TABLE.search(resp.text) and any(map(is_data_table, parse_tree_tables(resp.text))):
+        # Ansicht je Seite aus der Config (neu erkannt: reine Navigations-Baeume
+        # nur Ebene/Titel/Aktionen -> "tree" = wie bisher nur als Links)
+        view = "tree"
+        if TREE_TABLE.search(resp.text):
+            detected = ("table" if any(map(is_data_table, parse_tree_tables(resp.text)))
+                        else "tree")
+            page = self.call_from_thread(self.learn_page, clean_url(url), name, {
+                "view": detected, "expand": can_expand_all(resp.text), "open_table": ""})
+            view = page["view"]
+            open_col = open_col or page["open_table"]
+        if view == "table":
             try:
                 tables, tree_html = expand_tree_tables(self.session, resp.url, resp.text,
-                                                       self.client.timeout)
+                                                       self.client.timeout, page["expand"])
             except (HISinOneError, requests.RequestException) as e:
                 self.call_from_thread(self.notify, f"Aufklappen fehlgeschlagen: {e}",
                                       severity="warning")
                 tables, tree_html = parse_tree_tables(resp.text), resp.text
             if tables:
-                self.call_from_thread(self.show_tree_tables, name, resp.url, tables,
+                self.call_from_thread(self.show_tree_tables, name, clean_url(url), resp.url,
+                                      tables,
                                       tree_html if tree_html is not resp.text else None,
                                       open_col)
         elif open_col:
             self.call_from_thread(self.notify, "Keine Tabelle auf der Seite (abgemeldet?).",
                                   severity="warning")
 
-    def show_tree_tables(self, name: str, url: str, tables: list[dict],
+    def learn_page(self, key: str, name: str, detected: dict) -> dict:
+        """Seite in PAGES eintragen: erkannte Werte nur, wo die Config noch
+        nichts (Gueltiges) hat - Benutzer-Einstellungen gehen vor."""
+        page = PAGES.setdefault(key, {})
+        page.setdefault("name", name)
+        valid = {"view": lambda v: v in ("table", "tree"),
+                 "expand": lambda v: isinstance(v, bool),
+                 "open_table": lambda v: isinstance(v, str)}
+        for k, v in detected.items():
+            if not valid[k](page.get(k)):
+                page[k] = v
+        page.setdefault("tables", {})
+        return dict(page)
+
+    def action_toggle_view(self) -> None:
+        """Aktuelle Seite zwischen Tabellen-Ansicht und nur Links umschalten
+        (wird in der Config gemerkt) und neu laden."""
+        page = PAGES.get(self.stable_url)
+        if not page:
+            self.notify("Keine Baum-Tabelle auf dieser Seite.", severity="warning")
+            return
+        page["view"] = "tree" if page["view"] == "table" else "table"
+        self.notify(f"Ansicht: {'Tabelle' if page['view'] == 'table' else 'nur Links'}")
+        self.action_reload()
+
+    def show_tree_tables(self, name: str, key: str, url: str, tables: list[dict],
                          expanded_html: str | None, open_col: str = "") -> None:
         if expanded_html and self.save_dir:
             save_html(self.save_dir, url, expanded_html, f"{name}_aufgeklappt")
-        screen = TreeTableScreen(name, tables)
+        prefs = PAGES[key]["tables"]
+        for t in tables:  # alte seitenlose Einstellungen uebernehmen
+            k = f"{table_name(t)} [{','.join(t['cols'])}]"
+            if k in LEGACY_TABLES and k not in prefs:
+                prefs[k] = LEGACY_TABLES.pop(k)
+        screen = TreeTableScreen(name, tables, prefs=prefs)
         self.push_screen(screen)
         # Taste l: gleich die Leistungsdaten im Vollbild (Esc -> alle Tabellen)
-        idx = next((i for i, t in enumerate(tables) if open_col and open_col in t["cols"]), None)
+        # open_col: Spalte (Shortcut) oder Tabellenname (Config open_table)
+        idx = next((i for i, t in enumerate(tables)
+                    if open_col and (open_col in t["cols"] or table_name(t) == open_col)), None)
         if idx is not None:
             screen.open_single(idx)
 
@@ -930,7 +989,8 @@ def main() -> int:
                     help=f"{CONFIG_PATH} weder lesen noch schreiben")
     args = ap.parse_args()
     cfg = {} if args.no_config else load_config()
-    TABLE_PREFS.update(cfg.get("tables", {}))
+    PAGES.update(cfg.get("pages", {}))
+    LEGACY_TABLES.update(cfg.get("tables", {}))
     app = ExploreApp(
         tree=cfg.get("tree", True) if args.tree is None else args.tree,
         sort=cfg.get("sort", False) if args.sort is None else args.sort,
