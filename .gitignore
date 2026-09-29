@@ -16,3 +16,9 @@ venv/
 # Editor / lokale Einstellungen
 .vscode/
 .idea/
+
+# Gespeicherte Seiten / Skript-Ausgaben (persoenliche Daten)
+start.html
+list_links.txt
+*.html
+*.csv
