@@ -50,7 +50,8 @@ Links). Gibt es genau einen "Alle aufklappen"-Button, wird er einmal geklickt
 
 Einstellungen (Baum, alphabetisch, Speichern an/aus + Ordner, Shortcuts, je
 Seite mit Baum-Tabelle view/expand/open_table und je Tabelle Spalten/eigene
-Spalten/letzter Versuch/Filter) stehen in
+Spalten/letzter Versuch/Filter, zugeklappte Knoten im Link-Baum je Seite -
+letztere werden nur beim Beenden geschrieben) stehen in
 ~/.config/hisinone-explore/config.json (0600, enthaelt ggf. Filter mit
 Modulnamen). Gelesen beim Start; geschrieben beim Beenden und alle 100 s,
 aber nur wenn sich etwas geaendert hat. Angegebene Optionen (--flat, --sort,
@@ -127,6 +128,11 @@ class TableBar(Horizontal):
 #   expand      einmal "Alle aufklappen" klicken (nur wenn es genau einen gibt)
 #   open_table  diese Tabelle (Name) gleich im Vollbild oeffnen, "" = alle zeigen
 PAGES: dict[str, dict] = {}
+# Link-Baum: zugeklappte Knoten je Seite (Config "collapsed"), Schluessel =
+# stabile URL, Werte = Pfade aus Beschriftungen "Eltern › Kind"; alles andere
+# ist aufgeklappt. Loest selbst nur beim Beenden ein Schreiben aus (nicht beim
+# 100-s-Backup), damit Auf-/Zuklappen keine Schreibvorgaenge erzeugt.
+COLLAPSED: dict[str, list[str]] = {}
 # alte Config (Tabellen ohne Seite): beim ersten Treffer in die Seite uebernehmen
 LEGACY_TABLES: dict[str, dict] = {}
 
@@ -631,28 +637,40 @@ class ExploreApp(App):
     def config_snapshot(self) -> dict:
         return {"tree": self.tree_mode, "sort": self.sort, "save_on": bool(self.save_dir),
                 "save_path": self.save_path, "shortcuts": self.shortcuts, "pages": PAGES,
+                "collapsed": COLLAPSED,
                 **({"tables": LEGACY_TABLES} if LEGACY_TABLES else {})}
 
-    def save_config(self) -> None:
-        """Nur schreiben, wenn sich seit dem letzten Schreiben etwas geaendert hat."""
-        snap = json.dumps(self.config_snapshot(), sort_keys=True, ensure_ascii=False)
-        if snap == self.config_written:
+    def _snap(self, with_collapsed: bool = True) -> str:
+        cfg = self.config_snapshot()
+        if not with_collapsed:
+            cfg.pop("collapsed")
+        return json.dumps(cfg, sort_keys=True, ensure_ascii=False)
+
+    def save_config(self, final: bool = False) -> None:
+        """Nur schreiben, wenn sich seit dem letzten Schreiben etwas geaendert
+        hat. Zwischendurch (final=False) zaehlt der Link-Baum nicht als
+        Aenderung, beim Beenden schon."""
+        if final:
+            changed = self._snap() != self.config_written
+        else:
+            changed = self._snap(False) != self.config_written_main
+        if not changed:
             return
         try:
             write_config(self.config_snapshot())
-            self.config_written = snap
+            self.config_written, self.config_written_main = self._snap(), self._snap(False)
         except OSError as e:
             self.notify(f"Config nicht speicherbar: {e}", severity="error")
 
     def on_unmount(self) -> None:
-        self.save_config()
+        self.save_config(final=True)
 
     def on_mount(self) -> None:
         # Ausgangsstand merken: geschrieben wird nur, was davon abweicht
         # ohne "shortcuts" in der Datei: einmal schreiben, damit die
         # Standard-Tasten dort sichtbar und editierbar sind
-        self.config_written = json.dumps(self.config_snapshot(), sort_keys=True,
-                                         ensure_ascii=False) if self.shortcuts_from_file else ""
+        self.config_written = self._snap() if self.shortcuts_from_file else ""
+        self.config_written_main = self._snap(False) if self.shortcuts_from_file else ""
         self.bind_shortcuts()
         self.set_interval(AUTOSAVE_SECONDS, self.save_config)
         tree = self.query_one("#links", Tree)
@@ -806,17 +824,23 @@ class ExploreApp(App):
         tree = self.query_one("#links", Tree)
         tree.clear()
         # Tiefe -> Elternknoten: jeder Eintrag haengt am letzten flacheren Knoten
-        stack = [(-1, tree.root)]
+        collapsed = set(COLLAPSED.get(self.stable_url, []))
+        self.node_paths = {}
+        stack = [(-1, tree.root, "")]
         for lab, url, fb, depth in rows:
             while stack[-1][0] >= depth:
                 stack.pop()
-            parent = stack[-1][1]
+            parent, ppath = stack[-1][1], stack[-1][2]
+            plain = (link_name(lab) or lab) if url else lab.lstrip("─ ")
+            path = f"{ppath} › {plain}" if ppath else plain
+            open_ = path not in collapsed
             if url:
                 node = parent.add(self.label(Link(lab, url, fb)), data=Link(lab, url, fb),
-                                  expand=True)
+                                  expand=open_)
             else:
-                node = parent.add(Text(lab.lstrip("─ "), style="bold"), expand=True)
-            stack.append((depth, node))
+                node = parent.add(Text(lab.lstrip("─ "), style="bold"), expand=open_)
+            self.node_paths[node.id] = path
+            stack.append((depth, node, path))
         for node in list(tree.root.children):
             self._leafify(node)
         tree.root.expand()
@@ -864,6 +888,23 @@ class ExploreApp(App):
         return text
 
     # -- Ereignisse -----------------------------------------------------------
+
+    @on(Tree.NodeCollapsed, "#links")
+    @on(Tree.NodeExpanded, "#links")
+    def node_toggled(self, event) -> None:
+        """Auf-/Zuklappen je Seite merken (nur Zugeklapptes wird gespeichert)."""
+        path = getattr(self, "node_paths", {}).get(event.node.id)
+        if not path or not self.tree_mode:
+            return
+        paths = set(COLLAPSED.get(self.stable_url, []))
+        if isinstance(event, Tree.NodeCollapsed):
+            paths.add(path)
+        else:
+            paths.discard(path)
+        if paths:
+            COLLAPSED[self.stable_url] = sorted(paths)
+        else:
+            COLLAPSED.pop(self.stable_url, None)
 
     @on(Tree.NodeSelected, "#links")
     def node_selected(self, event: Tree.NodeSelected) -> None:
@@ -990,6 +1031,7 @@ def main() -> int:
     args = ap.parse_args()
     cfg = {} if args.no_config else load_config()
     PAGES.update(cfg.get("pages", {}))
+    COLLAPSED.update(cfg.get("collapsed", {}))
     LEGACY_TABLES.update(cfg.get("tables", {}))
     app = ExploreApp(
         tree=cfg.get("tree", True) if args.tree is None else args.tree,
@@ -999,7 +1041,7 @@ def main() -> int:
     app.shortcuts = cfg.get("shortcuts", DEFAULT_SHORTCUTS)
     app.shortcuts_from_file = "shortcuts" in cfg
     if args.no_config:
-        app.save_config = lambda: None
+        app.save_config = lambda **kw: None
     app.run()
     return 0
 
