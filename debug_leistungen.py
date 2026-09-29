@@ -7,44 +7,74 @@ keine Noten. Rohdaten landen in /tmp/hisinone-explore/ (0700, persoenlich!).
     .venv/bin/python debug_leistungen.py
 """
 
-import explore
-from hisinone_noten import HISinOneClient
+import requests
 
-c = HISinOneClient.from_env()
-s, _ = explore.login(c)
-print("Login OK")
-d = explore.prepare_save_dir("/tmp/hisinone-explore")
+from hisinone.explore.jsf import jsf_click
+from hisinone.explore.leistungen import (
+    EXPAND_ALL,
+    LEISTUNGEN_FORM,
+    LEISTUNGEN_PATH,
+    parse_leistungen,
+)
+from hisinone.explore.session import get_page, login
+from hisinone.explore.storage import prepare_save_dir, save_html
+from hisinone.noten import HISinOneClient
 
-explore.pacer.step()
-page = s.get(c.qis_base + explore.LEISTUNGEN_PATH, timeout=c.timeout)
-page.encoding = "utf-8"
-print(f"GET {page.status_code} {page.url}")
-print("  Formular examsReadonly:", 'id="examsReadonly"' in page.text)
-print("  Button Alle aufklappen:", f'id="{explore.EXPAND_ALL}"' in page.text)
-print("  Zeilen (zugeklappt):", len(explore.parse_leistungen(page.text)))
-print("  ->", explore.save_html(d, page.url, page.text, "debug_get"))
-
-# Antwort des POST mitschneiden, auch wenn jsf_click sie nicht versteht
-captured = {}
-orig_post = s.post
+SAVE_DIR = "/tmp/hisinone-explore"
 
 
-def post(*a, **kw):
-    captured["r"] = r = orig_post(*a, **kw)
-    return r
+class RecordingSession:
+    """Leitet an die Session weiter und merkt sich die letzte POST-Antwort -
+    auch wenn jsf_click sie nicht versteht."""
+
+    def __init__(self, session: requests.Session):
+        self.session = session
+        self.last_post: requests.Response | None = None
+
+    def post(self, *args, **kwargs) -> requests.Response:
+        self.last_post = self.session.post(*args, **kwargs)
+        return self.last_post
 
 
-s.post = post
-try:
-    frag = explore.jsf_click(s, page.url, page.text, explore.LEISTUNGEN_FORM,
-                             explore.EXPAND_ALL, c.timeout)
-    rows = explore.parse_leistungen(frag)
-    print("Zeilen (aufgeklappt):", len(rows))
-    print("  Tiefe/Typ:", sorted({(r["tiefe"], r["typ"]) for r in rows}))
-except Exception as e:  # noqa: BLE001 - Debug
-    print("FEHLER:", type(e).__name__, e)
-r = captured.get("r")
-if r is not None:
-    print(f"POST {r.status_code} {r.headers.get('Content-Type')} {len(r.text)} Zeichen")
-    print("  Anfang:", r.text[:300].replace("\n", " "))
-    print("  ->", explore.save_html(d, r.url, r.text, "debug_post"))
+def report_page(page: requests.Response, save_dir) -> None:
+    print(f"GET {page.status_code} {page.url}")
+    print("  Formular examsReadonly:", f'id="{LEISTUNGEN_FORM}"' in page.text)
+    print("  Button Alle aufklappen:", f'id="{EXPAND_ALL}"' in page.text)
+    print("  Zeilen (zugeklappt):", len(parse_leistungen(page.text)))
+    print("  ->", save_html(save_dir, page.url, page.text, "debug_get"))
+
+
+def report_expand(recorder: RecordingSession, page: requests.Response, timeout: int) -> None:
+    try:
+        fragment = jsf_click(recorder, page.url, page.text, LEISTUNGEN_FORM, EXPAND_ALL, timeout)
+        rows = parse_leistungen(fragment)
+        print("Zeilen (aufgeklappt):", len(rows))
+        print("  Tiefe/Typ:", sorted({(row["tiefe"], row["typ"]) for row in rows}))
+    except Exception as error:  # noqa: BLE001 - Debug: jeden Fehler anzeigen
+        print("FEHLER:", type(error).__name__, error)
+
+
+def report_post(post: requests.Response | None, save_dir) -> None:
+    if post is None:
+        return
+    print(f"POST {post.status_code} {post.headers.get('Content-Type')} {len(post.text)} Zeichen")
+    print("  Anfang:", post.text[:300].replace("\n", " "))
+    print("  ->", save_html(save_dir, post.url, post.text, "debug_post"))
+
+
+def main() -> int:
+    client = HISinOneClient.from_env()
+    session, _ = login(client)
+    print("Login OK")
+    save_dir = prepare_save_dir(SAVE_DIR)
+    page = get_page(session, client.qis_base + LEISTUNGEN_PATH, None, client.timeout)
+    page.encoding = "utf-8"
+    report_page(page, save_dir)
+    recorder = RecordingSession(session)
+    report_expand(recorder, page, client.timeout)
+    report_post(recorder.last_post, save_dir)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
