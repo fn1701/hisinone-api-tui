@@ -204,8 +204,16 @@ usw., Info-Spalten `1`, `2` usw.
 | `^(?!.*Bestanden)` | enthält **nicht** „Bestanden“ |
 | `^(?=.*\bPL\b)(?!.*Bestanden)` | enthält „PL“ (als Wort), aber nicht „Bestanden“ |
 | `\bA=Bestanden` | Spalte `A` ist „Bestanden“ |
+| `Titel=[^\|]*PV(?!.*\bA=Bestanden)` | „PV“ in der Spalte Titel und Spalte A nicht „Bestanden“ |
 | `Mathe\|Programm` | enthält eins von beiden |
 | `^Titel=Mathe` | oberster Elternknoten beginnt mit „Mathe“ |
+
+In der Vollbild-Tabelle wechselt `t` zwischen aufklappbarer Tabelle, Baum und
+flacher Liste; die Wahl wird je Tabelle in der Config gespeichert (Standard:
+Tabelle, mit `--flat` Liste). Baum und Liste zeigen die übrigen Spalten der
+markierten Zeile unten in der Seitenleiste. Der Filter wirkt in allen Ansichten
+gleich. Zeilen mit eigener Seite sind mit ◆ markiert: `g` öffnet die Seite in
+der App, `o` im Browser.
 
 Im Link-Baum ist der Text „Beschriftung URL“; Beispiel:
 `_flowId=.*exam`, also Links, deren URL einen Flow mit „exam“ im Namen startet.

@@ -22,7 +22,7 @@ class TableViewState:
         self.custom_on = prefs.custom_on and bool(table.custom)
         self.latest = prefs.latest
         self.filter = prefs.filter
-        self.flat = prefs.flat  # flache Liste: alle Zeilen ohne Einrueckung/Auf-Zu
+        self.view = prefs.view  # "" = Standard (der Bildschirm setzt ihn ein)
         # Spalten wachsen beim Auf-/Zuklappen nur (kein Springen); neuer Filter
         # oder Alle auf/zu: neu aus dem Gezeigten
         self.col_widths: dict[str, int] = {}
@@ -59,21 +59,28 @@ class TableViewState:
                          if col in self.col_choice and not self.custom_on]  # fmt: skip
         self.col_choice = chosen + hidden_custom
 
-    def shown(self, regex: bool = False) -> list[ShownRow]:
-        """Sichtbare Zeilen; mit Filter die Treffer samt Eltern (eigener
-        Auf-/Zu-Zustand). regex: re.error bei ungueltigem Ausdruck."""
-        if (self.filter, regex, self.flat) != self._last_query:
+    def shown(self, view: str, regex: bool = False) -> list[ShownRow]:
+        """Sichtbare Zeilen der Ansicht (TABLE_VIEWS); mit Filter die Treffer
+        samt Eltern (eigener Auf-/Zu-Zustand), in der Liste nur die Treffer.
+        "tree": alle Zeilen, das Auf-/Zuklappen macht das Baum-Widget.
+        regex: re.error bei ungueltigem Ausdruck."""
+        if (self.filter, regex, view) != self._last_query:
             self.col_widths.clear()
             self.filter_fold = TreeFold(set())
-            self._last_query = (self.filter, regex, self.flat)
+            self._last_query = (self.filter, regex, view)
         rows = latest_attempts_tree(self.table.rows) if self.latest else self.table.rows
         self.matched = None
-        if self.flat:
+        if view == "flat":
             return self._flat(rows, regex)
         if self.filter.strip():
-            self.matched = filter_tree(rows, self.filter_cols(), self.filter, regex)
-            return self.filter_fold.visible(self.matched, self.table.title_col)
-        return self.fold.visible(rows, self.table.title_col)
+            rows = self.matched = filter_tree(rows, self.filter_cols(), self.filter, regex)
+        fold = TreeFold(set()) if view == "tree" else self.current_fold
+        return fold.visible(rows, self.table.title_col)
+
+    @property
+    def current_fold(self) -> TreeFold:
+        """Zugeklappte Knoten: mit Filter die des Filterergebnisses."""
+        return self.filter_fold if self.matched is not None else self.fold
 
     def _flat(self, rows: list[Row], regex: bool) -> list[ShownRow]:
         """Alle Zeilen bzw. nur die Treffer (ohne Eltern); Markierung "" =
@@ -110,7 +117,7 @@ class TableViewState:
         self.latest = self.latest and self.can_latest
         folded = sorted(self.fold.folded) if self.fold_changed else None
         prefs = TablePrefs(self.col_choice, self.custom_on, self.latest, self.filter, folded,
-                           self.flat)  # fmt: skip
+                           self.view)  # fmt: skip
         default = TablePrefs(self.table.cols + self.table.custom)
         if prefs == default:
             self.page_prefs.pop(self.table.prefs_key, None)
@@ -118,6 +125,5 @@ class TableViewState:
             self.page_prefs[self.table.prefs_key] = prefs
 
     def flags(self) -> list[str]:
-        named = (("eigene Spalten", self.custom_on), ("letzter Versuch", self.latest),
-                 ("flach", self.flat))  # fmt: skip
+        named = (("eigene Spalten", self.custom_on), ("letzter Versuch", self.latest))
         return [name for name, is_on in named if is_on]

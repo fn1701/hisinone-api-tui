@@ -61,8 +61,10 @@ class PlannerLoading:
             return
         shown, tables, html, used = result  # used: ggf. auf die Seite zurueckgesetzt
         self.planner_choices[page.stable_url] = used
-        self.store.put_tables(used.cache_key(page.stable_url), shown, tables,
-                              time.monotonic() - started)  # fmt: skip
+        # unter der angefragten Wahl (vor den Filtern) und der geladenen (nach
+        # den Filtern): ein Neustart findet den Stand mit beiden Schluesseln
+        for key in {choice.cache_key(page.stable_url), used.cache_key(page.stable_url)}:
+            self.store.put_tables(key, shown, tables, time.monotonic() - started)
         refreshed = self._refresh_planner_page(shown, dialog)
         self.call_from_thread(self._planner_loaded, dialog, shown, tables, html, refreshed)
 

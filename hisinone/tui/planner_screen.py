@@ -5,7 +5,7 @@ Regex, Auf-/Zuklappen, Spalten, Export)."""
 from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.widgets import Button, DataTable
+from textual.widgets import Button
 
 from hisinone.explore.table_model import TreeTable
 
@@ -40,7 +40,7 @@ class PlannerScreen(SingleTableScreen):
         self.filter_input.value = self.state.filter
         self.page_name = page.title_with_time()
         self.refresh_table()
-        self.query_one(DataTable).focus()  # Tasten (o, t, ...) gleich fuer die Tabelle
+        self.focus_rows()  # Tasten (g, o, t, ...) gleich fuer die Tabelle
 
     def set_page(self, page, choice: PlannerChoice) -> None:
         """Seite nach dem Laden (mit allen Filtern): fuer die Listen und fuer

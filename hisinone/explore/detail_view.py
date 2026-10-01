@@ -2,22 +2,21 @@
 Studienplaner) als Abschnitte lesen: Ueberschrift (``<legend>``, Ebene nach
 Verschachtelung der Fieldsets), Felder "Bezeichnung: Wert" und Freitext.
 
-Nur die gerade aktive Registerkarte steht in der Seite; die anderen kommen
-erst per Klick (Ajax) und werden hier nur mit Namen gelistet.
+Nur die gerade aktive Registerkarte steht in der Seite; die anderen sind
+Formular-Knoepfe ohne eigene URL und werden daher nicht gezeigt.
 """
 
 import html as htmlmod
 import re
 from dataclasses import dataclass, field
 
-from .html_text import attribute, text_of
+from .html_text import text_of
 
 FORM_START = re.compile(r'<form\b[^>]*\bid="detailViewData"')
 LEGEND = re.compile(r"<legend\b[^>]*>(.*?)</legend>", re.S)
 FIELDSET = re.compile(r"<(/?)fieldset\b")
 FIELD = re.compile(r'<label\b[^>]*class="labelWithBG[^"]*"[^>]*>(.*?)</label>\s*'
                    r'<div\b[^>]*class="answer[^"]*"[^>]*>(.*?)</div>', re.S)  # fmt: skip
-TAB = re.compile(r'<button\b[^>]*role="tab"[^>]*>')
 # Kein Inhalt: Ueberschriften (doppelt zur legend), Knoepfe, Skripte
 NOISE = re.compile(r"<(h\d|button|script|legend)\b.*?</\1>", re.S)
 LINE_END = re.compile(r"<br\b[^>]*>|</(p|li|div|tr)>", re.I)
@@ -33,20 +32,8 @@ class DetailSection:
     text: str = ""
 
 
-@dataclass
-class DetailTab:
-    name: str
-    active: bool
-
-
 def has_detail_view(html: str) -> bool:
     return bool(FORM_START.search(html))
-
-
-def detail_tabs(html: str) -> list[DetailTab]:
-    """Registerkarten in Seitenreihenfolge (aktiv = steht in der Seite)."""
-    return [DetailTab(attribute(tag, "value"), "active" in attribute(tag, "class").split())
-            for tag in TAB.findall(html)]  # fmt: skip
 
 
 def parse_detail(html: str) -> list[DetailSection]:
@@ -97,12 +84,9 @@ def detail_title(sections: list[DetailSection], fallback: str) -> str:
     return fallback
 
 
-def detail_markdown(title: str, tabs: list[DetailTab], sections: list[DetailSection]) -> str:
+def detail_markdown(title: str, sections: list[DetailSection]) -> str:
     """Alles als Markdown (Anzeige in der TUI, Export)."""
     parts = [f"# {title}"]
-    if tabs:
-        names = [f"**{tab.name}**" if tab.active else tab.name for tab in tabs]
-        parts.append("Registerkarten: " + " · ".join(names))
     top = min((section.level for section in sections), default=1)
     for section in sections:
         parts.append(_section_markdown(section, section.level - top + 2))

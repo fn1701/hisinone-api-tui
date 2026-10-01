@@ -19,6 +19,7 @@ REGEX_EXAMPLES = [
     ("enthaelt nicht Bestanden", "^(?!.*Bestanden)"),
     ("PL, aber nicht Bestanden", r"^(?=.*\bPL\b)(?!.*Bestanden)"),
     ("Spalte A = Bestanden", r"\bA=Bestanden"),
+    ("PV im Titel, A nicht Bestanden", r"Titel=[^|]*PV(?!.*\bA=Bestanden)"),
     ("eins von beiden", "Mathe|Programm"),
 ]
 
@@ -114,6 +115,10 @@ class FilterScreen(Screen):
                 self.suggest_list.highlighted = 0
             self.suggest_list.focus()
 
+    def focus_rows(self) -> None:
+        """Zeilen-Widget fokussieren (Unterklassen mit mehreren Ansichten)."""
+        self.query_one(DataTable).focus()
+
     def close_filter(self) -> bool:
         """Esc: erst Vorschlagsliste, dann Filterfeld verlassen.
         False = nichts zu schliessen (Bildschirm verlassen)."""
@@ -123,6 +128,6 @@ class FilterScreen(Screen):
                 self.filter_input.focus()
             return True
         if self.focused is self.filter_input:
-            self.query_one(DataTable).focus()
+            self.focus_rows()
             return True
         return False

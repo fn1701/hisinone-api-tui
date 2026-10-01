@@ -1,7 +1,5 @@
 """Aktionen der Link-Ansicht: Verlauf, Ansicht umschalten, URL, Speichern."""
 
-from urllib.parse import urljoin
-
 from hisinone.explore.clipboard import copy_external
 from hisinone.explore.storage import prepare_save_dir, save_html
 
@@ -29,12 +27,12 @@ class NavigationApp(LoadingApp):
         if node and node.data:
             self.open(node.data.url, node.data.label)
 
-    def open_from_table(self, href: str, name: str) -> None:
-        """Link aus einer Tabellenzeile (relativ zur aktuellen Seite) oeffnen;
-        die Tabellen-Bildschirme schliessen, sonst laege die Seite darunter."""
+    def open_as_page(self, url: str, name: str) -> None:
+        """Link aus einer Tabellenzeile als neue Seite oeffnen; die Tabellen-
+        Bildschirme schliessen, sonst laege die Seite darunter."""
         while len(self.screen_stack) > 1:
             self.pop_screen()
-        self.open(urljoin(self.page.server_url, href), name)
+        self.open(url, name)
 
     def action_toggle_view(self) -> None:
         """Aktuelle Seite zwischen Tabellen-Ansicht und nur Links umschalten

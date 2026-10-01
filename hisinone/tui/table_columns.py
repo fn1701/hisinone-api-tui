@@ -1,4 +1,4 @@
-"""Spaltenauswahl (k), eigene Spalten (x), letzter Versuch (v), Baum/flach (t) fuer den
+"""Spaltenauswahl (k), eigene Spalten (x), letzter Versuch (v), fuer den
 Vollbild-Tabellenbildschirm."""
 
 from rich.text import Text
@@ -12,11 +12,6 @@ class TableColumns:
 
     def action_toggle_custom(self) -> None:
         self.state.custom_on = not self.state.custom_on
-        self.refresh_table()
-
-    def action_toggle_flat(self) -> None:
-        """Baum <-> flache Liste (wie t im Link-Baum)."""
-        self.state.flat = not self.state.flat
         self.refresh_table()
 
     def action_toggle_latest(self) -> None:

@@ -10,6 +10,8 @@ from textual.widgets import DataTable, Static
 
 from hisinone.explore.table_model import Row, TreeTable
 
+from .row_tree import LINK_MARK
+
 CUSTOM_STYLE = "italic magenta"  # eigene (berechnete) Spalten
 MIN_ROWS = 10  # groessere Tabellen bekommen mindestens so viele Zeilen
 
@@ -91,9 +93,10 @@ def _cell(row: Row, col: str, title: tuple[str, str | None], custom: set[str]) -
     (ohne Einrueckung), None = Baum ohne Auf-/Zu."""
     value = str(row.get(col, ""))
     title_col, mark = title
-    if col == title_col and mark != "":  # Titel eingerueckt wie der Baum, Wurzeln fett
-        text = "  " * row["tiefe"] + (mark or "") + value
-        return Text(text, style="bold" if row["tiefe"] == 0 else "")
+    if col == title_col:  # Titel eingerueckt wie der Baum, Wurzeln fett, Link mit Raute
+        indent = "" if mark == "" else "  " * row["tiefe"] + (mark or "")
+        text = Text(indent + value, style="bold" if row["tiefe"] == 0 and mark != "" else "")
+        return text.append(LINK_MARK, style="cyan") if row.get("url") else text
     if col in custom:
         return Text(value, style=CUSTOM_STYLE)
     return value

@@ -1,18 +1,23 @@
-"""Zeile oeffnen (o): die Detailseite der Zeile (z.B. Modulbeschreibung im
-Studienplaner) in der Link-Ansicht laden."""
-
-from textual.widgets import DataTable
+"""Zeile oeffnen: g laedt die Seite der Zeile (z.B. Modulbeschreibung im
+Studienplaner) in der App, o oeffnet sie im Browser (wie im Link-Baum)."""
 
 
 class TableLinks:
-    """Mixin; erwartet self.shown (sichtbare Zeilen) und app.open_from_table."""
+    """Mixin; erwartet current_row/row_url (TableViews) und app.open_from_table."""
 
     def action_open_row(self) -> None:
-        index = self.query_one(DataTable).cursor_row
-        if not 0 <= index < len(self.shown):
-            return
-        row = self.shown[index].row
-        if not row.get("url"):
+        row = self._linked_row()
+        if row is not None:
+            self.app.open_from_table(row["url"], str(row.get(self.table.title_col, "")))
+
+    def action_browse_row(self) -> None:
+        row = self._linked_row()
+        if row is not None:
+            self.app.open_url(self.row_url(row))
+
+    def _linked_row(self) -> dict | None:
+        row = self.current_row()
+        if row is None or not row.get("url"):
             self.notify("Diese Zeile hat keinen Link (ggf. mit r neu laden).", severity="warning")
-            return
-        self.app.open_from_table(row["url"], str(row.get(self.table.title_col, "")))
+            return None
+        return row

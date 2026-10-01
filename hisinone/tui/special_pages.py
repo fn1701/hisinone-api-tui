@@ -5,11 +5,12 @@ from hisinone.explore.detail_view import has_detail_view
 from hisinone.explore.planner import is_study_planner
 
 from .current_page import CurrentPage
+from .detail_loading import DetailLoading
 from .detail_screen import DetailScreen
 from .planner_app import PlannerLoading
 
 
-class SpecialPages(PlannerLoading):
+class SpecialPages(DetailLoading, PlannerLoading):
     """Mixin fuer LoadingApp."""
 
     def show_special(self, page: CurrentPage) -> bool:

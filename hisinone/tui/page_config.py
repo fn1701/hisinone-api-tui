@@ -10,12 +10,22 @@ gilt, was in der Config steht (Benutzer kann sie dort oder per Taste aendern):
 from dataclasses import asdict, dataclass, field
 
 VIEWS = ("table", "tree")
+# Tabellen: aufklappbare Tabelle, Baum bzw. Liste mit Seitenleiste
+TABLE_VIEWS = ("table", "tree", "flat")
 
 
 def _typed(data: dict, key: str, kind: type, default):
     """Wert aus der Config, wenn er den erwarteten Typ hat, sonst default."""
     value = data.get(key)
     return value if isinstance(value, kind) else default
+
+
+def _table_view(data: dict) -> str:
+    """Ansicht einer Tabelle; aeltere Config hatte nur "flat": true."""
+    view = _typed(data, "view", str, "")
+    if view not in TABLE_VIEWS:
+        view = "flat" if data.get("flat") is True else ""
+    return view
 
 
 @dataclass
@@ -27,7 +37,7 @@ class TablePrefs:
     latest: bool = False  # nur letzter Versuch
     filter: str = ""  # Zeilenfilter
     folded: list[str] | None = None  # zugeklappte Knoten, None = Startzustand
-    flat: bool = False  # flache Liste statt Baum (Taste t)
+    view: str = ""  # TABLE_VIEWS (Taste t); "" = Standard aus den Einstellungen
 
     @classmethod
     def from_dict(cls, data: dict) -> "TablePrefs":
@@ -37,7 +47,7 @@ class TablePrefs:
             latest=_typed(data, "latest", bool, False),
             filter=_typed(data, "filter", str, ""),
             folded=_typed(data, "folded", list, None),
-            flat=_typed(data, "flat", bool, False),
+            view=_table_view(data),
         )
 
     def to_dict(self) -> dict:
