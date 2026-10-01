@@ -20,7 +20,7 @@ from .current_page import CurrentPage, LoadedTables
 from .link_app import LinkTreeApp
 from .page_config import PageConfig
 from .page_store import PageStore
-from .tables_screen import TreeTablesScreen
+from .tables_screen import TreeTablesScreen, tables_screen
 
 
 class LoadingApp(LinkTreeApp):
@@ -143,7 +143,7 @@ class LoadingApp(LinkTreeApp):
             save_html(self.save_dir, page.server_url, loaded.expanded_html,
                       f"{page.name}_aufgeklappt")  # fmt: skip
         prefs = self.settings.page_tables(page.stable_url, loaded.tables)
-        screen = TreeTablesScreen(page.title_with_time(), loaded.tables, prefs)
-        self.push_screen(screen)
-        # Taste l: gleich die Leistungsdaten im Vollbild (Esc -> alle Tabellen)
-        screen.open_matching(loaded.open_col)
+        self.push_screen(tables_screen(page.title_with_time(), loaded.tables, prefs))
+        if isinstance(self.screen, TreeTablesScreen):
+            # Taste l: gleich die Leistungsdaten im Vollbild (Esc -> alle Tabellen)
+            self.screen.open_matching(loaded.open_col)

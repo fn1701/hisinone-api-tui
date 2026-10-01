@@ -60,3 +60,10 @@ class TreeTablesScreen(Screen):
 
     def action_back(self) -> None:
         self.app.pop_screen()
+
+
+def tables_screen(page_name: str, tables: list[TreeTable], prefs: dict[str, TablePrefs]) -> Screen:
+    """Eine Tabelle gleich im Vollbild (Auf/Zu, Filter), mehrere als Uebersicht."""
+    if len(tables) == 1:
+        return SingleTableScreen(page_name, tables[0], prefs)
+    return TreeTablesScreen(page_name, tables, prefs)

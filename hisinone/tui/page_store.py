@@ -1,7 +1,7 @@
 """Anbindung des Seiten-Caches an die App: CurrentPage und Tabellen rein
 und raus, nur langsame Seiten werden gespeichert."""
 
-from hisinone.explore.page_cache import CacheOptions, CachedPage, PageCache
+from hisinone.explore.page_cache import CachedPage, CacheOptions, PageCache
 from hisinone.explore.table_model import TreeTable
 
 from .current_page import CurrentPage

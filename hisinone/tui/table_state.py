@@ -2,7 +2,8 @@
 
 from hisinone.explore.exams import latest_attempts_tree
 from hisinone.explore.row_filter import match_rows
-from hisinone.explore.table_model import Row, TreeTable
+from hisinone.explore.table_model import TreeTable
+from hisinone.explore.tree_fold import ShownRow, TreeFold
 
 from .page_config import TablePrefs
 
@@ -21,6 +22,10 @@ class TableViewState:
         self.custom_on = prefs.custom_on and bool(table.custom)
         self.latest = prefs.latest
         self.filter = prefs.filter
+        self.fold_changed = prefs.folded is not None  # sonst Startzustand, nicht merken
+        self.fold = TreeFold(set(prefs.folded or []))
+        if not self.fold_changed and table.start_folded:
+            self.fold.fold_all(table.rows, table.title_col)
 
     @property
     def can_latest(self) -> bool:
@@ -46,15 +51,32 @@ class TableViewState:
                          if col in self.col_choice and not self.custom_on]  # fmt: skip
         self.col_choice = chosen + hidden_custom
 
-    def shown_rows(self) -> list[Row]:
+    def shown(self) -> list[ShownRow]:
+        """Sichtbare Zeilen; mit Filter alle Treffer, egal ob zugeklappt."""
         rows = latest_attempts_tree(self.table.rows) if self.latest else self.table.rows
-        return match_rows(rows, self.filter_cols(), self.filter)
+        if self.filter.strip():
+            return [ShownRow(row, "", "") for row in match_rows(rows, self.filter_cols(),
+                                                                 self.filter)]  # fmt: skip
+        return self.fold.visible(rows, self.table.title_col)
+
+    def toggle_node(self, key: str) -> None:
+        self.fold.toggle(key)
+        self.fold_changed = True
+
+    def fold_all(self, folded: bool) -> None:
+        """True = alles bis auf die oberste Ebene zu, False = alles auf."""
+        if folded:
+            self.fold.fold_all(self.table.rows, self.table.title_col)
+        else:
+            self.fold.unfold_all()
+        self.fold_changed = True
 
     def remember(self) -> None:
         """In die Seiten-Einstellungen schreiben; den Standardzustand nicht
         (blosses Oeffnen ist keine Aenderung)."""
         self.latest = self.latest and self.can_latest
-        prefs = TablePrefs(self.col_choice, self.custom_on, self.latest, self.filter)
+        folded = sorted(self.fold.folded) if self.fold_changed else None
+        prefs = TablePrefs(self.col_choice, self.custom_on, self.latest, self.filter, folded)
         default = TablePrefs(self.table.cols + self.table.custom)
         if prefs == default:
             self.page_prefs.pop(self.table.prefs_key, None)

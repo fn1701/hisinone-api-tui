@@ -26,6 +26,7 @@ class TablePrefs:
     custom_on: bool = False  # eigene Spalten (Typ, Art) an
     latest: bool = False  # nur letzter Versuch
     filter: str = ""  # Zeilenfilter
+    folded: list[str] | None = None  # zugeklappte Knoten, None = Startzustand
 
     @classmethod
     def from_dict(cls, data: dict) -> "TablePrefs":
@@ -34,6 +35,7 @@ class TablePrefs:
             custom_on=_typed(data, "custom_on", bool, False),
             latest=_typed(data, "latest", bool, False),
             filter=_typed(data, "filter", str, ""),
+            folded=_typed(data, "folded", list, None),
         )
 
     def to_dict(self) -> dict:

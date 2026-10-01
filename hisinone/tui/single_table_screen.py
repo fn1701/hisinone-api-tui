@@ -1,8 +1,5 @@
 """Eine Tabelle im Vollbild: Zeilenfilter (/), Spalten (k), eigene Spalten (x),
-letzter Versuch (v), Export (e)."""
-
-import re
-from pathlib import Path
+letzter Versuch (v), Export (e), Knoten auf/zu (Leertaste, +, -)."""
 
 from rich.text import Text
 from textual import on
@@ -11,22 +8,21 @@ from textual.binding import Binding
 from textual.containers import VerticalScroll
 from textual.widgets import DataTable, Footer, Header, Input, OptionList, Static
 
-from hisinone.explore.export import export_rows
 from hisinone.explore.row_filter import filter_suggestions
-from hisinone.explore.storage import prepare_save_dir, timestamp
 from hisinone.explore.table_model import TreeTable
 
-from .dialogs import ColumnsDialog, ExportDialog
+from .dialogs import ColumnsDialog
 from .filter_screen import SUGGEST_CSS, FilterScreen
 from .page_config import TablePrefs
+from .table_export import TableExport
 from .table_heights import fit_tables
 from .table_state import TableViewState
-from .table_widgets import CUSTOM_STYLE, TABLES_CSS, TableBar, fill_table
+from .table_widgets import CUSTOM_STYLE, TABLES_CSS, ClickTable, TableBar, fill_table
 
 FILTER_HINT = "Zeilen filtern: Text oder Spalte=Wert, mehrere mit Leerzeichen (↓ = Vorschlaege)"
 
 
-class SingleTableScreen(FilterScreen):
+class SingleTableScreen(TableExport, FilterScreen):
     BINDINGS = [
         Binding("escape", "back", "Zurueck"),
         Binding("slash", "focus_filter", "Filter"),
@@ -34,6 +30,9 @@ class SingleTableScreen(FilterScreen):
         Binding("x", "toggle_custom", "Eigene Spalten"),
         Binding("v", "toggle_latest", "Letzter Versuch"),
         Binding("e", "export", "Export"),
+        Binding("space", "toggle_node", "Auf/Zu"),
+        Binding("plus", "fold_all(False)", "Alle auf"),
+        Binding("minus", "fold_all(True)", "Alle zu"),
     ]
     CSS = "SingleTableScreen DataTable { height: auto; }" + TABLES_CSS + SUGGEST_CSS
 
@@ -41,6 +40,7 @@ class SingleTableScreen(FilterScreen):
         super().__init__()
         self.page_name, self.table = page_name, table
         self.state = TableViewState(table, page_prefs)
+        self.shown = self.state.shown()
         self.shown_rows = table.rows
 
     def suggestions(self) -> list[str]:
@@ -62,7 +62,7 @@ class SingleTableScreen(FilterScreen):
         yield OptionList(id="suggest")
         with VerticalScroll():
             yield TableBar(0, "", False)
-            yield DataTable(zebra_stripes=True, cursor_type="row")
+            yield ClickTable(zebra_stripes=True, cursor_type="row")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -77,9 +77,10 @@ class SingleTableScreen(FilterScreen):
         """Nach jeder Aenderung: merken, filtern, neu fuellen, Titel setzen."""
         self.state.filter = self.filter_input.value
         self.state.remember()
-        self.shown_rows = self.state.shown_rows()
+        self.shown = self.state.shown()
+        self.shown_rows = [shown.row for shown in self.shown]
         fill_table(self.query_one(DataTable), self.table, self.shown_rows,
-                   self.state.active_cols())  # fmt: skip
+                   self.state.active_cols(), [shown.mark for shown in self.shown])  # fmt: skip
         counts = f"{len(self.shown_rows)} von {len(self.table.rows)} Zeilen"
         flags = self.state.flags()
         suffix = f" ({', '.join(flags)})" if flags else ""
@@ -130,21 +131,20 @@ class SingleTableScreen(FilterScreen):
             self.state.choose_cols(chosen)
             self.refresh_table()
 
-    def action_export(self) -> None:
-        name = re.sub(r"[^\w.-]+", "_", self.table.display_name)
-        default = prepare_save_dir(self.app.save_path) / f"{name}_{timestamp()}.csv"
-        rows, cols = self.shown_rows, self.state.active_cols()
+    @on(DataTable.RowSelected)
+    def row_clicked(self, event: DataTable.RowSelected) -> None:  # Klick/Enter = Leertaste
+        self.action_toggle_node(event.cursor_row)
 
-        def done(path: str | None) -> None:  # Zeilen/Spalten wie beim Oeffnen des Dialogs
-            if path:
-                self._export(rows, cols, path)
+    def action_toggle_node(self, index: int | None = None) -> None:
+        """Knoten auf-/zuklappen (Standard: unter dem Cursor); Cursor bleibt auf ihm."""
+        table = self.query_one(DataTable)
+        index = table.cursor_row if index is None else index
+        if 0 <= index < len(self.shown) and self.shown[index].mark.strip():
+            self.state.toggle_node(self.shown[index].key)
+            self.refresh_table()
+            table.move_cursor(row=index)
 
-        self.app.push_screen(ExportDialog(str(default)), done)
-
-    def _export(self, rows: list, cols: list[str], path: str) -> None:
-        try:
-            out = export_rows(rows, Path(path).expanduser(), cols)
-        except (ValueError, OSError) as error:
-            self.notify(f"Export fehlgeschlagen: {error}", severity="error")
-        else:
-            self.notify(f"{len(rows)} Zeilen -> {out}")
+    def action_fold_all(self, folded: bool) -> None:
+        self.state.fold_all(folded)
+        self.refresh_table()
+        self.query_one(DataTable).move_cursor(row=0)
