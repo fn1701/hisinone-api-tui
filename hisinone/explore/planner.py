@@ -8,6 +8,7 @@ auf den Studiengang.
 
 import html as htmlmod
 import re
+from collections.abc import Callable
 from urllib.parse import urljoin
 
 import requests
@@ -15,17 +16,21 @@ import requests
 from hisinone.noten import HISinOneError
 
 from .jsf import find_form, jsf_partial, jsf_updates
+from .planner_courses import CONTENT, COURSE_LINK
+from .planner_filter import apply_button, sidebar_form
 from .planner_tree import parse_planner_tree
 from .table_model import TreeTable
 
 FORM_ID = "studyPlanner"
-CONTENT = "studyPlanner:container:content-container"
-COURSE_LINK = re.compile(rf'<a\b[^>]*\bid="({CONTENT}:studentCourseOfStudySelection:[^"]*'
-                         r':doChangeDepp)"')  # fmt: skip
 EXPAND_BTN = f"{CONTENT}:expandAllBtn"
 TREE_ID = f"{CONTENT}:studyPlannerTree"
 # Blaettern im Baum: PrimeFaces.cw("TreeTable", ..., paginator:{..., rows:10, rowCount:24
 PAGINATOR = re.compile(r"paginator:\{[^}]*?\brows:(\d+),rowCount:(\d+)")
+Progress = Callable[[str], None]  # z.B. "Schritt 2/4: Studiengang"
+
+
+def no_progress(step: str) -> None:
+    """Standard: Fortschritt nirgends anzeigen."""
 
 
 def is_study_planner(html: str) -> bool:
@@ -43,18 +48,51 @@ class PlannerLoader:
         action, self.form_html = find_form(html, FORM_ID)
         self.post_url = urljoin(page_url, action)
         self.course_link = COURSE_LINK.search(html).group(1)
+        self.sidebar = sidebar_form(html)  # (action, HTML) der Filter-Seitenleiste
+        self.progress: Progress = no_progress
 
-    def load(self, expand: bool = True) -> tuple[list[TreeTable], str]:
-        """(Tabellen, HTML des Baums); expand=False: nur der Studiengang."""
+    def load(
+        self, expand: bool = True, filters: dict[str, str] | None = None,
+        progress: Progress = no_progress, course_id: str = "",
+    ) -> tuple[list[TreeTable], str]:  # fmt: skip
+        """(Tabellen, HTML des Baums); expand=False: nur der Studiengang;
+        filters: Werte der Seitenleiste (Feldname -> Wert), vor dem Studiengang;
+        course_id: Link des Studiengangs ("" = der erste)."""
+        self.progress = progress
+        self.course_link = course_id or self.course_link
+        steps = ["Filter"] * bool(filters and self.sidebar) + ["Studiengang", "Alle Knoten"]
+        steps += ["Alle aufklappen"] * expand
+        self._step(steps, 0)
+        if filters and self.sidebar:
+            self._apply_filters(filters)
+            self._step(steps, 1)
         tree_html = self._click(self.course_link).get("contentFrame", "")
         self.form_html += tree_html
+        self._step(steps, steps.index("Alle Knoten"))
         tree_html = self._all_top_nodes(tree_html)
         if expand:
+            self._step(steps, len(steps) - 1)
             tree_html = self._click(EXPAND_BTN).get(TREE_ID, tree_html)
         tables = parse_planner_tree(tree_html)
         if not tables:
             raise HISinOneError("Studienplaner: kein Baum in der Antwort.")
         return tables, tree_html
+
+    def _step(self, steps: list[str], index: int) -> None:
+        self.progress(f"Schritt {index + 1}/{len(steps)}: {steps[index]}")
+
+    def _apply_filters(self, filters: dict[str, str]) -> None:
+        """Wie "Uebernehmen" in der Seitenleiste; der Server merkt sich die
+        Filter fuer den folgenden Klick auf den Studiengang. Erster Request,
+        daher passt der ViewState der Seitenleiste noch."""
+        action, form_html = self.sidebar
+        button = apply_button(form_html)
+        if not button:
+            raise HISinOneError("Studienplaner: Filter-Button nicht gefunden.")
+        updates = jsf_updates(self.session, urljoin(self.page_url, action), self.page_url,
+                              form_html, button, self.timeout,
+                              filters)  # fmt: skip
+        self._remember_view_state(updates)
 
     def _all_top_nodes(self, tree_html: str) -> str:
         """Alle obersten Knoten auf eine Seite (1 Request, nur wenn geblaettert

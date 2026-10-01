@@ -5,7 +5,7 @@ import requests
 
 from .custom_columns import is_data_table
 from .expand import can_expand_all, expand_tree_tables
-from .planner import PlannerLoader, is_study_planner
+from .planner import PlannerLoader, Progress, is_study_planner, no_progress
 from .table_model import TreeTable
 from .tree_tables import TREE_TABLE, parse_tree_tables
 
@@ -26,9 +26,12 @@ def can_expand(html: str) -> bool:
 
 
 def load_tables(
-    session: requests.Session, page_url: str, html: str, timeout: int, expand: bool = True
-) -> tuple[list[TreeTable], str]:
-    """(Tabellen, HTML das sie enthaelt); Studienplaner: 1-2 Requests."""
+    session: requests.Session, page_url: str, html: str, timeout: int, expand: bool = True,
+    filters: dict[str, str] | None = None, progress: Progress = no_progress,
+    course_id: str = "",
+) -> tuple[list[TreeTable], str]:  # fmt: skip
+    """(Tabellen, HTML das sie enthaelt); Studienplaner: 2-4 Requests, mit Filtern."""
     if is_study_planner(html):
-        return PlannerLoader(session, page_url, html, timeout).load(expand)
+        return PlannerLoader(session, page_url, html, timeout).load(expand, filters, progress,
+                                                                         course_id)  # fmt: skip
     return expand_tree_tables(session, page_url, html, timeout, expand)

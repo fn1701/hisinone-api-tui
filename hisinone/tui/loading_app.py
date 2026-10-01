@@ -10,8 +10,8 @@ from textual import work
 from hisinone.explore.html_text import link_name, page_title
 from hisinone.explore.links import clean_url
 from hisinone.explore.page_tables import can_expand, has_data_tables, has_tables, load_tables
+from hisinone.explore.planner import is_study_planner
 from hisinone.explore.session import get_page, is_html, login
-from hisinone.explore.storage import save_html
 from hisinone.explore.table_model import TreeTable
 from hisinone.explore.tree_tables import parse_tree_tables
 from hisinone.noten import HISinOneClient, HISinOneError
@@ -20,10 +20,12 @@ from .current_page import CurrentPage, LoadedTables
 from .link_app import LinkTreeApp
 from .page_config import PageConfig
 from .page_store import PageStore
-from .tables_screen import TreeTablesScreen, tables_screen
+from .planner_app import PlannerLoading
+from .planner_nodes import PlannerNodes
+from .table_display import TableDisplay
 
 
-class LoadingApp(LinkTreeApp):
+class LoadingApp(PlannerLoading, PlannerNodes, TableDisplay, LinkTreeApp):
     def __init__(self, settings):
         super().__init__(settings)
         self.session: requests.Session | None = None
@@ -31,6 +33,7 @@ class LoadingApp(LinkTreeApp):
         self.home_url = ""
         self.history: list[tuple[str, str]] = []  # (stabile URL, Name)
         self.store = PageStore(settings.cache)
+        self.planner_choices = {}
 
     @work(thread=True, exclusive=True)
     def do_login(self) -> None:
@@ -84,7 +87,9 @@ class LoadingApp(LinkTreeApp):
             return False
         page, tables = cached
         self.call_from_thread(self.enter_page, page, push)
-        if tables:
+        if is_study_planner(page.html):  # alte Eintraege haben noch Tabellen
+            self.call_from_thread(self.show_planner, page)
+        elif tables:
             loaded = LoadedTables(page, tables, None, open_col or config.open_table)
             self.call_from_thread(self.show_tree_tables, loaded)
         return True
@@ -123,7 +128,10 @@ class LoadingApp(LinkTreeApp):
         return config
 
     def _load_tables(self, page: CurrentPage, open_col: str, expand: bool) -> list[TreeTable]:
-        """Wenn moeglich einmal "Alle aufklappen" (wie ein Klick im Browser)."""
+        """Wenn moeglich einmal "Alle aufklappen" (wie ein Klick im Browser);
+        der Studienplaner zeigt erst seine Filter."""
+        if is_study_planner(page.html):
+            return self.call_from_thread(self.show_planner, page) or []
         try:
             tables, html = load_tables(self.session, page.server_url, page.html,
                                        self.client.timeout, expand)  # fmt: skip
@@ -136,14 +144,3 @@ class LoadingApp(LinkTreeApp):
             self.call_from_thread(self.show_tree_tables, LoadedTables(page, tables, expanded,
                                                                       open_col))  # fmt: skip
         return tables
-
-    def show_tree_tables(self, loaded: LoadedTables) -> None:
-        page = loaded.page
-        if loaded.expanded_html and self.save_dir:
-            save_html(self.save_dir, page.server_url, loaded.expanded_html,
-                      f"{page.name}_aufgeklappt")  # fmt: skip
-        prefs = self.settings.page_tables(page.stable_url, loaded.tables)
-        self.push_screen(tables_screen(page.title_with_time(), loaded.tables, prefs))
-        if isinstance(self.screen, TreeTablesScreen):
-            # Taste l: gleich die Leistungsdaten im Vollbild (Esc -> alle Tabellen)
-            self.screen.open_matching(loaded.open_col)

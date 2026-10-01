@@ -46,10 +46,11 @@ def jsf_click(
 
 def jsf_updates(
     session: requests.Session, post_url: str, page_url: str, form_html: str, source_id: str,
-    timeout: int,
+    timeout: int, values: dict[str, str] | None = None,
 ) -> dict[str, str]:  # fmt: skip
-    """Klickt Button oder Link im Formular; {id des Bereichs: neues HTML}."""
-    fields = _ajax_fields(form_html, source_id)
+    """Klickt Button oder Link im Formular; {id des Bereichs: neues HTML}.
+    values: Eingaben im Formular (z.B. gewaehlte Filter)."""
+    fields = _ajax_fields(form_html, source_id) | (values or {})
     return jsf_partial(session, post_url, page_url, form_html, fields, timeout)
 
 
@@ -78,10 +79,7 @@ def _ajax_fields(form_html: str, source_id: str) -> dict[str, str]:
     source = re.search(pattern, form_html)
     if not source:
         raise HISinOneError(f"Button/Link {source_id} nicht gefunden.")
-    # Welche Bereiche neu gerendert werden, steht im onclick
-    onclick = htmlmod.unescape(attribute(source.group(0), "onclick"))
-    render = re.search(r"render:\\?'([^'\\]*)", onclick)
-    render_ids = render.group(1) if render else "@form"
+    execute_ids, render_ids = _partial_ids(attribute(source.group(0), "onclick"), source_id)
     # Nur ein Button schickt seinen Wert mit, ein Link nicht
     own_value = (
         {source_id: attribute(source.group(0), "value")} if source.group(1) == "button" else {}
@@ -89,8 +87,21 @@ def _ajax_fields(form_html: str, source_id: str) -> dict[str, str]:
     return own_value | {
         "javax.faces.source": source_id,
         "javax.faces.partial.event": "click",
-        "javax.faces.partial.execute": source_id,
-        "javax.faces.partial.render": render_ids.replace("@this", source_id).strip(),
+        "javax.faces.partial.execute": execute_ids,
+        "javax.faces.partial.render": render_ids,
         "javax.faces.behavior.event": "action",
         "javax.faces.partial.ajax": "true",
     }
+
+
+def _partial_ids(onclick: str, source_id: str) -> tuple[str, str]:
+    """(execute, render) aus dem onclick von jsf.ajax.request."""
+    # Welche Bereiche neu gerendert werden, steht im onclick
+    onclick = htmlmod.unescape(onclick)
+    render = re.search(r"render:\\?'([^'\\]*)", onclick)
+    render_ids = render.group(1) if render else "@form"
+    execute = re.search(r"execute:\\?'([^'\\]*)", onclick)
+    # Nur feste ids uebernehmen (z.B. ein anderes Formular); @this/@form wie bisher
+    explicit = execute and "@" not in execute.group(1)
+    execute_ids = execute.group(1).strip() if explicit else source_id
+    return execute_ids, render_ids.replace("@this", source_id).strip()
