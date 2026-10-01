@@ -10,6 +10,7 @@ import html as htmlmod
 import re
 from dataclasses import dataclass, field
 
+from .detail_tables import insert_tables, replace_tables
 from .html_text import text_of
 
 FORM_START = re.compile(r'<form\b[^>]*\bid="detailViewData"')
@@ -62,8 +63,9 @@ def _depth(before: str) -> int:
 
 def _section(title: str, level: int, fragment: str) -> DetailSection:
     fields = [(text_of(label), text_of(value)) for label, value in FIELD.findall(fragment)]
-    rest = FIELD.sub("", fragment)
-    return DetailSection(title, level, fields, block_text(rest))
+    tables: list[str] = []
+    rest = replace_tables(FIELD.sub("", fragment), tables)
+    return DetailSection(title, level, fields, insert_tables(block_text(rest), tables))
 
 
 def block_text(fragment: str) -> str:
@@ -98,5 +100,7 @@ def _section_markdown(section: DetailSection, heading: int) -> str:
     lines = ["#" * min(heading, 6) + " " + section.title]
     lines += [f"- **{label}**: {value}" for label, value in section.fields]
     for paragraph in section.text.split("\n\n") if section.text else []:
-        lines += ["", paragraph.replace("\n", "  \n")]  # Zeilenumbruch bleibt
+        if not paragraph.startswith("|"):  # Tabellen bleiben, wie sie sind
+            paragraph = paragraph.replace("\n", "  \n")  # Zeilenumbruch bleibt
+        lines += ["", paragraph]
     return "\n".join(lines)

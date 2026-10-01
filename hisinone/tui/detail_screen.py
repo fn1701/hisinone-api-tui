@@ -8,7 +8,7 @@ from rich.text import Text
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.screen import Screen
-from textual.widgets import Footer, Header, MarkdownViewer, Static
+from textual.widgets import Footer, Header, Markdown, MarkdownViewer, Static
 
 from hisinone.explore.detail_tabs import base_url, detail_tabs
 from hisinone.explore.detail_view import detail_markdown, detail_title, parse_detail
@@ -16,6 +16,16 @@ from hisinone.explore.storage import prepare_save_dir, safe_file_name, timestamp
 
 from .current_page import CurrentPage
 from .dialogs import ExportDialog
+
+
+class DetailViewer(MarkdownViewer):
+    """Links (◆ in Tabellen) oeffnen die Seite in der App statt als Datei."""
+
+    async def _on_markdown_link_clicked(self, message: Markdown.LinkClicked) -> None:
+        message.stop()
+        message.prevent_default()  # sonst laedt MarkdownViewer den Link als Datei
+        self.app.open_from_table(message.href, "")
+
 
 TAB_BINDINGS = [Binding(str(number), f"tab({number})", show=False) for number in range(1, 10)]
 
@@ -46,7 +56,7 @@ class DetailScreen(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Static(id="tabs")
-        yield MarkdownViewer(self.markdown, show_table_of_contents=False)
+        yield DetailViewer(self.markdown, show_table_of_contents=False)
         yield Footer()
 
     def on_mount(self) -> None:
