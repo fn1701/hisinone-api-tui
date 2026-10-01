@@ -68,6 +68,10 @@ class LinkTreeApp(App):
         # Filterfeld - danach zurueck in den Baum, damit Tasten Befehle sind.
         self.link_tree.focus()
 
+    def fetch_failed(self, message: str) -> None:
+        self.link_tree.loading = False
+        self.notify(message, severity="error")
+
     def rebuild(self) -> None:
         """Baut Baum/Liste aus der aktuellen Seite neu auf (auch nach Filter/Toggle)."""
         tree_mode, sort = self.settings.tree, self.settings.sort
@@ -80,7 +84,7 @@ class LinkTreeApp(App):
         entries = tree_order(links, sort=sort) if tree_mode else flat_entries(links)
         collapsed = set(self.settings.collapsed.get(self.page.stable_url, []))
         self.node_paths = LinkTreeFiller(self.link_tree, self.host, collapsed).fill(entries)
-        self.sub_title = self.page.name
+        self.sub_title = self.page.title_with_time()
         mode = ("Baum" if tree_mode else "Liste") + (", A-Z" if sort else "")
         counts = LinkCounts(total, len(links), text, mode)
         self.query_one("#page", Static).update(page_info(self.page, counts, self.save_dir))

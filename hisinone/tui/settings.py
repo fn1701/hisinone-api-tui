@@ -4,6 +4,7 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from hisinone.explore.page_cache import CacheOptions
 from hisinone.explore.table_model import TreeTable
 
 from .config import write_config
@@ -19,6 +20,7 @@ class Settings:
     sort: bool = False
     save_path: str = DEFAULT_SAVE_PATH
     save_on: bool = False
+    cache: CacheOptions = field(default_factory=CacheOptions)
     shortcuts: list[Shortcut] = field(default_factory=default_shortcuts)
     shortcuts_from_file: bool = False  # False -> beim Beenden einmal schreiben
     pages: dict[str, PageConfig] = field(default_factory=dict)  # Schluessel = stabile URL
@@ -35,6 +37,11 @@ class Settings:
             sort=config.get("sort", False),
             save_path=config.get("save_path", DEFAULT_SAVE_PATH),
             save_on=config.get("save_on", False),
+            cache=CacheOptions(
+                no_cache=bool(config.get("no_cache", False)),
+                ttl_seconds=int(config.get("cache_ttl", 0)),
+                min_load_ms=int(config.get("cache_min_load_ms", 250)),
+            ),
             collapsed=dict(config.get("collapsed", {})),
             legacy_tables=dict(config.get("tables", {})),
         )
@@ -47,7 +54,9 @@ class Settings:
 
     def to_config(self, with_collapsed: bool = True) -> dict:
         config = {"tree": self.tree, "sort": self.sort, "save_on": self.save_on,
-                  "save_path": self.save_path,
+                  "save_path": self.save_path, "no_cache": self.cache.no_cache,
+                  "cache_ttl": self.cache.ttl_seconds,
+                  "cache_min_load_ms": self.cache.min_load_ms,
                   "shortcuts": [s.to_dict() for s in self.shortcuts],
                   "pages": {url: page.to_dict() for url, page in self.pages.items()}}  # fmt: skip
         if with_collapsed:

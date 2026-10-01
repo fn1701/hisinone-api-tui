@@ -16,7 +16,7 @@ class NavigationApp(LoadingApp):
 
     def action_reload(self) -> None:
         if self.page.stable_url:
-            self.open(self.page.stable_url, self.page.name, push=False)
+            self.open(self.page.stable_url, self.page.name, push=False, fresh=True)
 
     def action_home(self) -> None:
         if self.home_url:
