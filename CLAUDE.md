@@ -31,6 +31,10 @@ Gilt fuer alle Python-Dateien. Durchgesetzt per pre-commit
   (Deutsch, ohne Umlaute in Bezeichnern).
 - **Formatierung/Lint**: `ruff format` und `ruff check` (Regeln in
   `pyproject.toml`: E, F, W, I, N, UP, B, SIM, C90; Zeilenlaenge 100).
+- **Allgemein fuer alle HISinOne-Systeme**, nicht nur eine Hochschule: keine
+  Hochschul-Hosts, -Pfade oder -IDs im Code oder in Test-/Probe-Skripten
+  hartkodieren; Adressen aus `.env`/Client (`base_url`, `qis_base`) bzw. aus
+  der geladenen Seite ableiten. Hochschulspezifisches nur in Config/`.env`.
 - Oeffentliche API/CLIs bleiben stabil (`from hisinone_noten import
   HISinOneClient, ...`, `python hisinone_noten.py`, `explore*.py`,
   `leistungen.py`).
