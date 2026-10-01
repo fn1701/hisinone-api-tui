@@ -73,11 +73,15 @@ class PlannerLoading:
         try:
             if page.from_cache and not (page := self._fresh_page(page, progress)):
                 return None
-            choice = self._usable_choice(page, choice)
-            course_id = choice.course_id(parse_courses(page.html))
-            tables, html = load_tables(self.session, page.server_url, page.html,
-                                       self.client.timeout, True, choice.filters, progress,
-                                       course_id)  # fmt: skip
+            if not _has_filters(page, choice):  # wie im Browser: erst Studiengang
+                self._click_through(page, _page_choice(page, choice.course), progress)
+                if not (page := self._fresh_page(page, progress)):
+                    return None
+            if not _has_filters(page, choice):
+                self.call_from_thread(self.notify, "Filter nicht verfuegbar - Standard geladen.",
+                                      severity="warning")  # fmt: skip
+                choice = _page_choice(page, choice.course)
+            tables, html = self._click_through(page, choice, progress)
         except (HISinOneError, requests.RequestException) as error:
             self.call_from_thread(self.notify, f"Laden fehlgeschlagen: {error}",
                                   severity="error")  # fmt: skip
@@ -85,16 +89,10 @@ class PlannerLoading:
         shown = dataclasses.replace(page, pulled_at=time.time(), from_cache=False)
         return shown, tables, html, choice
 
-    def _usable_choice(self, page: CurrentPage, choice: PlannerChoice) -> PlannerChoice:
-        """Fehlt ein gewaehlter Filter in der Seite (Studiensemester gibt es erst,
-        wenn in dieser Sitzung ein Studiengang gewaehlt ist), gelten die Werte
-        der Seite - sonst ignoriert der Server ihn und der Cache-Eintrag luegt."""
-        names = {filter_field.name for filter_field in parse_filters(page.html)}
-        if set(choice.filters) <= names:
-            return choice
-        message = "Filter erst nach dem ersten Laden verfuegbar - Standard geladen."
-        self.call_from_thread(self.notify, message, severity="warning")
-        return dataclasses.replace(_page_choice(page), course=choice.course)
+    def _click_through(self, page: CurrentPage, choice: PlannerChoice, progress):
+        course_id = choice.course_id(parse_courses(page.html))
+        return load_tables(self.session, page.server_url, page.html, self.client.timeout, True,
+                           choice.filters, progress, course_id)  # fmt: skip
 
     def _fresh_page(self, page: CurrentPage, progress) -> CurrentPage | None:
         progress("Seite neu holen")
@@ -125,9 +123,16 @@ class PlannerLoading:
             self.planner_screen.show_table(page, tables[0], prefs)
 
 
-def _page_choice(page: CurrentPage) -> PlannerChoice:
+def _has_filters(page: CurrentPage, choice: PlannerChoice) -> bool:
+    """Steht jeder gewaehlte Filter in der Seite? (Studiensemester erst, wenn
+    in dieser Sitzung ein Studiengang gewaehlt ist; sonst ignoriert ihn der
+    Server und der Cache-Eintrag luegt.)"""
+    return set(choice.filters) <= {field.name for field in parse_filters(page.html)}
+
+
+def _page_choice(page: CurrentPage, course: str = "") -> PlannerChoice:
     """Ohne gemerkte Wahl (z.B. nach Neustart): die Werte, die die Seite selbst
     zeigt - sonst stuende in den Listen etwas anderes als geladen wird."""
     filters = {field.name: field.current for field in parse_filters(page.html)}
     courses = parse_courses(page.html)
-    return PlannerChoice(courses[0].label if courses else "", filters)
+    return PlannerChoice(course or (courses[0].label if courses else ""), filters)

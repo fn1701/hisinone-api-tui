@@ -1,5 +1,6 @@
 """Eine Tabelle im Vollbild: Zeilenfilter (/), Spalten (k), eigene Spalten (x),
-letzter Versuch (v), Baum/flach (t), Export (e), Knoten auf/zu (Leertaste, +, -)."""
+letzter Versuch (v), Baum/flach (t), Export (e), Zeile oeffnen (o),
+Knoten auf/zu (Leertaste, +, -)."""
 
 import re
 
@@ -18,13 +19,14 @@ from .page_config import TablePrefs
 from .table_columns import TableColumns
 from .table_export import TableExport
 from .table_heights import fit_tables
+from .table_links import TableLinks
 from .table_state import TableViewState
 from .table_widgets import TABLES_CSS, ClickTable, TableBar, fill_table
 
 FILTER_HINT = "Zeilen filtern: Text oder Spalte=Wert, mehrere mit Leerzeichen (↓ = Vorschlaege)"
 
 
-class SingleTableScreen(TableColumns, TableExport, FilterScreen):
+class SingleTableScreen(TableColumns, TableExport, TableLinks, FilterScreen):
     BINDINGS = [
         Binding("escape", "back", "Zurueck"),
         Binding("slash", "focus_filter", "Filter"),
@@ -33,6 +35,7 @@ class SingleTableScreen(TableColumns, TableExport, FilterScreen):
         Binding("v", "toggle_latest", "Letzter Versuch"),
         Binding("t", "toggle_flat", "Baum/Flach"),
         Binding("e", "export", "Export"),
+        Binding("o", "open_row", "Öffnen"),
         Binding("space", "toggle_node", "Auf/Zu"),
         Binding("plus", "fold_all(False)", "Alle auf"),
         Binding("minus", "fold_all(True)", "Alle zu"),

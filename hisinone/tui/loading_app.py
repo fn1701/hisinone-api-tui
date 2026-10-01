@@ -10,7 +10,6 @@ from textual import work
 from hisinone.explore.html_text import link_name, page_title
 from hisinone.explore.links import clean_url
 from hisinone.explore.page_tables import can_expand, has_data_tables, has_tables, load_tables
-from hisinone.explore.planner import is_study_planner
 from hisinone.explore.session import get_page, is_html, login
 from hisinone.explore.table_model import TreeTable
 from hisinone.explore.tree_tables import parse_tree_tables
@@ -20,11 +19,11 @@ from .current_page import CurrentPage, LoadedTables
 from .link_app import LinkTreeApp
 from .page_config import PageConfig
 from .page_store import PageStore
-from .planner_app import PlannerLoading
+from .special_pages import SpecialPages
 from .table_display import TableDisplay
 
 
-class LoadingApp(PlannerLoading, TableDisplay, LinkTreeApp):
+class LoadingApp(SpecialPages, TableDisplay, LinkTreeApp):
     def __init__(self, settings):
         super().__init__(settings)
         self.session: requests.Session | None = None
@@ -74,8 +73,7 @@ class LoadingApp(PlannerLoading, TableDisplay, LinkTreeApp):
 
     def _fetched_tables(self, page: CurrentPage, open_col: str) -> list[TreeTable]:
         """Tabellen der neu geladenen Seite zeigen (je nach Config)."""
-        if is_study_planner(page.html):  # Baum erst nach Studiengang/Filtern
-            self.call_from_thread(self.show_planner, page)
+        if self.call_from_thread(self.show_special, page):
             return []
         config = self._page_config(page) if has_tables(page.html) else None
         tables = []
@@ -94,8 +92,8 @@ class LoadingApp(PlannerLoading, TableDisplay, LinkTreeApp):
             return False
         page, tables = cached
         self.call_from_thread(self.enter_page, page, push)
-        if is_study_planner(page.html):  # alte Eintraege haben noch Tabellen
-            self.call_from_thread(self.show_planner, page)
+        if self.call_from_thread(self.show_special, page):
+            pass  # alte Planer-Eintraege haben noch Tabellen
         elif tables:
             loaded = LoadedTables(page, tables, None, open_col or config.open_table)
             self.call_from_thread(self.show_tree_tables, loaded)

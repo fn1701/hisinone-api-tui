@@ -19,6 +19,7 @@ TITLE = re.compile(r'class="unit-title-container[^"]*"[^>]*>(.*?)</div>', re.S)
 INFO = re.compile(r'class="unit-information[^"]*"[^>]*>(.*?)</div>', re.S)
 BADGE = re.compile(r'<[^>]*class="[^"]*\bbadge_character\b[^"]*"[^>]*>')
 SEPARATOR = re.compile(r'<img\b[^>]*\balt="\|"[^>]*>')
+DETAIL_LINK = re.compile(r'<a\b[^>]*\bid="[^"]*:showFurtherDetailsButton:link"[^>]*>')
 NODE_KIND = re.compile(r'class="node-container StudyPlanner(\w+?)NodeData')
 TITLE_COL = "Titel"
 ColumnName = Callable[[int], str]  # Position (ab 1) -> Spaltenname
@@ -34,7 +35,8 @@ def parse_planner_tree(html: str) -> list[TreeTable]:
 
 def _parse_row(part: str) -> Row:
     """Zeile mit Titel, Infofeldern "1".."n" und Plaketten "Status 1".."m";
-    "typ" (Knotenart aus dem Markup, z.B. Modul) nur intern."""
+    "typ" (Knotenart aus dem Markup, z.B. Modul) und "url" (Detailseite,
+    relativ zur Seite) nur intern."""
     row: Row = {"tiefe": int(LEVEL.match(part).group(1)) - 1}
     title = TITLE.search(part)
     row[TITLE_COL] = text_of(title.group(1)) if title else ""
@@ -45,6 +47,8 @@ def _parse_row(part: str) -> Row:
     _numbered(row, [badge for badge in badges if badge], _badge_name)
     kind = NODE_KIND.search(part)
     row["typ"] = kind.group(1) if kind else ""
+    link = DETAIL_LINK.search(part)
+    row["url"] = attribute(link.group(0), "href") if link else ""
     return row
 
 
