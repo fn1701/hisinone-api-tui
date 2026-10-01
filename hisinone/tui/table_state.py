@@ -22,6 +22,7 @@ class TableViewState:
         self.custom_on = prefs.custom_on and bool(table.custom)
         self.latest = prefs.latest
         self.filter = prefs.filter
+        self.col_widths: dict[str, int] = {}  # Spalten wachsen nur (kein Springen)
         self.fold_changed = prefs.folded is not None  # sonst Startzustand, nicht merken
         self.fold = TreeFold(set(prefs.folded or []))
         if not self.fold_changed and table.start_folded:

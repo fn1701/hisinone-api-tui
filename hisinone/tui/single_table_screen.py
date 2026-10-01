@@ -40,8 +40,7 @@ class SingleTableScreen(TableExport, FilterScreen):
         super().__init__()
         self.page_name, self.table = page_name, table
         self.state = TableViewState(table, page_prefs)
-        self.shown = self.state.shown()
-        self.shown_rows = table.rows
+        self.shown, self.shown_rows = self.state.shown(), table.rows
 
     def suggestions(self) -> list[str]:
         return filter_suggestions(self.table.rows, self.state.filter_cols())
@@ -80,7 +79,8 @@ class SingleTableScreen(TableExport, FilterScreen):
         self.shown = self.state.shown()
         self.shown_rows = [shown.row for shown in self.shown]
         fill_table(self.query_one(DataTable), self.table, self.shown_rows,
-                   self.state.active_cols(), [shown.mark for shown in self.shown])  # fmt: skip
+                   self.state.active_cols(), [shown.mark for shown in self.shown],
+                   self.state.col_widths)  # fmt: skip
         counts = f"{len(self.shown_rows)} von {len(self.table.rows)} Zeilen"
         flags = self.state.flags()
         suffix = f" ({', '.join(flags)})" if flags else ""

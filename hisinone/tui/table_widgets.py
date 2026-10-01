@@ -1,5 +1,6 @@
 """Bausteine der Tabellen-Bildschirme: Titelleiste, Befuellen, Hoehen."""
 
+from rich.cells import cell_len
 from rich.text import Text
 from textual import events
 from textual.app import ComposeResult
@@ -55,16 +56,33 @@ class ClickTable(DataTable):
 
 
 def fill_table(widget: DataTable, table: TreeTable, rows: list[Row], cols: list[str],
-               marks: list[str] | None = None) -> None:  # fmt: skip
-    """marks: Auf-/Zu-Zeichen je Zeile vor dem Titel (None = keine)."""
+               marks: list[str] | None = None,
+               widths: dict[str, int] | None = None) -> None:  # fmt: skip
+    """marks: Auf-/Zu-Zeichen je Zeile vor dem Titel (None = keine).
+    widths: bisher groesste Breite je Spalte, wird hier erweitert; die Spalten
+    wachsen nur (None = DataTable misst selbst)."""
     widget.clear(columns=True)
     custom = set(table.custom)
+    cells = [_row_cells(row, cols, (table.title_col, marks[index] if marks else ""), custom)
+             for index, row in enumerate(rows)]  # fmt: skip
+    if widths is not None:
+        _grow_widths(widths, cols, cells)
     for col in cols:
-        widget.add_column(Text(col, style=CUSTOM_STYLE) if col in custom else col)
-    for index, row in enumerate(rows):
-        mark = marks[index] if marks else ""
-        widget.add_row(*[_cell(row, col, (table.title_col, mark), custom) for col in cols])
+        label = Text(col, style=CUSTOM_STYLE) if col in custom else col
+        widget.add_column(label, width=widths[col] if widths is not None else None)
+    for row_cells in cells:
+        widget.add_row(*row_cells)
     widget.set_class(len(rows) > MIN_ROWS, "big")
+
+
+def _row_cells(row: Row, cols: list[str], title: tuple[str, str], custom: set[str]) -> list:
+    return [_cell(row, col, title, custom) for col in cols]
+
+
+def _grow_widths(widths: dict[str, int], cols: list[str], cells: list[list]) -> None:
+    for position, col in enumerate(cols):
+        widest = max((cell_len(str(row[position])) for row in cells), default=0)
+        widths[col] = max(widths.get(col, 0), cell_len(col), widest)
 
 
 def _cell(row: Row, col: str, title: tuple[str, str], custom: set[str]) -> Text | str:
