@@ -16,7 +16,7 @@ SIDEBAR_ID = "studyPlannerSidebar"
 SELECT = re.compile(r"<select\b[^>]*>.*?</select>", re.S)
 OPTION = re.compile(r"<option\b([^>]*)>([^<]*)", re.S)
 RADIO = re.compile(r'<input\b[^>]*type="radio"[^>]*>')
-LABEL = re.compile(r'label_top_position_marked[^>]*>\s*([^<]+)')
+LABEL = re.compile(r"label_top_position_marked[^>]*>\s*([^<]+)")
 # Uebernehmen-Button der Seitenleiste (oben und unten gleich)
 APPLY = re.compile(r'<button\b[^>]*\bid="([^"]*hideSidebar)"')
 
@@ -49,9 +49,13 @@ def parse_filters(html: str) -> list[FilterField]:
     if not form:
         return []
     form_html = form[1]
-    found = [(match.start(), _select_field(form_html, match)) for match in SELECT.finditer(form_html)]
+    found = [
+        (match.start(), _select_field(form_html, match)) for match in SELECT.finditer(form_html)
+    ]
     found += _radio_fields(form_html)
-    return [filter_field for _, filter_field in sorted(found, key=_position) if filter_field.options]
+    return [
+        filter_field for _, filter_field in sorted(found, key=_position) if filter_field.options
+    ]
 
 
 def _position(item: tuple[int, FilterField]) -> int:
@@ -75,7 +79,10 @@ def _radio_fields(form_html: str) -> list[tuple[int, FilterField]]:
         tag = match.group(0)
         name = attribute(tag, "name")
         if name not in groups:
-            groups[name] = (match.start(), FilterField(name, _label_before(form_html, match.start())))
+            groups[name] = (
+                match.start(),
+                FilterField(name, _label_before(form_html, match.start())),
+            )
         group = groups[name][1]
         value = attribute(tag, "value")
         group.options.append((value, _radio_text(form_html, attribute(tag, "id")) or value))

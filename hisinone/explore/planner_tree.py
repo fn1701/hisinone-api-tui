@@ -1,9 +1,10 @@
 """Baum des Studienplaners (PrimeFaces-TreeTable ``studyPlannerTree``) parsen.
 
-Anders als ``treeTableWithIcons`` hat jede Zeile keine Spalten, sondern einen
-Knoten-Block: Infozeile ("Modul | Nummer | Pflichtfach | empf. ... | x von y
-Credits"), Titel und Status-Plaketten. Die Infofelder werden nach Inhalt den
-Spalten zugeordnet, weil ihre Anzahl je Knotentyp schwankt.
+Jede Zeile ist ein Knoten-Block ohne Spalten: Titel, eine Infozeile mit
+unbeschrifteten Feldern ("Modul | 1.30.7122 | ... | 5 Credits") und Status-
+Plaketten. Damit es auf jedem HISinOne passt, wird nichts nach Inhalt erraten:
+die Infofelder werden nach Position zu Spalten "1", "2", ..., die Plaketten zu
+"Status 1", "Status 2", ...
 """
 
 import re
@@ -11,7 +12,6 @@ import re
 from .html_text import attribute, text_of
 from .table_model import Row, TreeTable
 
-PLANNER_COLS = ["Titel", "Typ", "Nummer", "Pflicht", "empf. FS", "Credits", "Details", "Status"]
 ROW_START = re.compile(r'(?=<tr\b[^>]*\bdata-level=")')
 LEVEL = re.compile(r'<tr\b[^>]*\bdata-level="(\d+)"')
 TITLE = re.compile(r'class="unit-title-container[^"]*"[^>]*>(.*?)</div>', re.S)
@@ -19,7 +19,8 @@ INFO = re.compile(r'class="unit-information[^"]*"[^>]*>(.*?)</div>', re.S)
 BADGE = re.compile(r'<[^>]*class="[^"]*\bbadge_character\b[^"]*"[^>]*>')
 SEPARATOR = re.compile(r'<img\b[^>]*\balt="\|"[^>]*>')
 NODE_KIND = re.compile(r'class="node-container StudyPlanner(\w+?)NodeData')
-UNIQUE_NAME = re.compile(r"\(Eindeutige Bezeichnung:[^)]*\)")
+TITLE_COL = "Titel"
+STATUS_COL = "Status"
 
 
 def parse_planner_tree(html: str) -> list[TreeTable]:
@@ -27,56 +28,42 @@ def parse_planner_tree(html: str) -> list[TreeTable]:
     rows = [_parse_row(part) for part in ROW_START.split(html) if LEVEL.match(part)]
     if not rows:
         return []
-    return [TreeTable("Studienplaner", list(PLANNER_COLS), rows, start_folded=True)]
+    return [TreeTable("Studienplaner", _columns(rows), rows, start_folded=True)]
 
 
 def _parse_row(part: str) -> Row:
+    """Zeile mit Titel, Infofeldern "1".."n" und Plaketten "Status 1".."m";
+    "typ" (Knotenart aus dem Markup, z.B. Modul) nur intern."""
     row: Row = {"tiefe": int(LEVEL.match(part).group(1)) - 1}
     title = TITLE.search(part)
-    row["Titel"] = text_of(title.group(1)) if title else ""
+    row[TITLE_COL] = text_of(title.group(1)) if title else ""
     info = INFO.search(part)
-    row.update(_info_fields(info.group(1) if info else ""))
-    if not row.get("Typ"):  # Termin-Knoten haben keine Infozeile mit Typ
-        kind = NODE_KIND.search(part)
-        row["Typ"] = kind.group(1).replace("VeranstaltungPlanelement", "Termine") if kind else ""
-    row["typ"] = row["Typ"]
+    fields = [text_of(field) for field in SEPARATOR.split(info.group(1))] if info else []
+    _numbered(row, "", [field for field in fields if field])
     badges = [attribute(tag, "title") for tag in BADGE.findall(part)]
-    row["Status"] = ", ".join(badge for badge in badges if badge)
+    _numbered(row, f"{STATUS_COL} ", [badge for badge in badges if badge])
+    kind = NODE_KIND.search(part)
+    row["typ"] = kind.group(1) if kind else ""
     return row
 
 
-def _info_fields(info_html: str) -> dict[str, str]:
-    """Infofelder nach Inhalt: erstes = Typ, zweites = Nummer, Rest erkannt
-    (Pflicht, empfohlenes Fachsemester, Credits) oder unter Details."""
-    fields = [text_of(field) for field in SEPARATOR.split(UNIQUE_NAME.sub("", info_html))]
-    fields = [field for field in fields if field]
-    if len(fields) < 2:  # z.B. "Veranstaltungstermine im Winter 2026/27"
-        return {"Details": fields[0]} if fields else {}
-    result = {"Typ": fields[0], "Nummer": fields[1]}
-    details = []
-    for field in fields[2:]:
-        column = _column_of(field)
-        if column:
-            result[column] = _short(column, field)
-        else:
-            details.append(field)
-    result["Details"] = ", ".join(details)
-    return result
+def _numbered(row: Row, prefix: str, values: list[str]) -> None:
+    for index, value in enumerate(values, start=1):
+        row[f"{prefix}{index}"] = value
 
 
-def _column_of(field: str) -> str:
-    if field.startswith("empf."):
-        return "empf. FS"
-    if field.endswith("Credits"):
-        return "Credits"
-    if field.endswith("fach"):  # Pflichtfach, Wahlpflichtfach, ...
-        return "Pflicht"
-    return ""
+def _columns(rows: list[Row]) -> list[str]:
+    """Titel, dann so viele Info- und Status-Spalten, wie es Werte gibt."""
+    info = _count(rows, "")
+    status = _count(rows, f"{STATUS_COL} ")
+    cols = [TITLE_COL] + [str(index) for index in range(1, info + 1)]
+    return cols + [f"{STATUS_COL} {index}" for index in range(1, status + 1)]
 
 
-def _short(column: str, field: str) -> str:
-    """Kurzform fuer schmale Spalten: "empf. fuer das 2. Fachsemester" -> "2"."""
-    if column == "empf. FS":
-        number = re.search(r"\d+", field)
-        return number.group(0) if number else field
-    return field.removesuffix(" Credits") if column == "Credits" else field
+def _count(rows: list[Row], prefix: str) -> int:
+    """Hoechste Nummer einer Spalte mit diesem Praefix in allen Zeilen."""
+    count = 0
+    for row in rows:
+        while f"{prefix}{count + 1}" in row:
+            count += 1
+    return count
