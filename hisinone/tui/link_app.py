@@ -82,7 +82,7 @@ class LinkTreeApp(App):
             links = [link for link in links
                      if text in link.label.casefold() or text in link.url.casefold()]  # fmt: skip
         entries = tree_order(links, sort=sort) if tree_mode else flat_entries(links)
-        collapsed = set(self.settings.collapsed.get(self.page.stable_url, []))
+        collapsed = self.settings.collapsed.for_page(self.page.stable_url)
         self.node_paths = LinkTreeFiller(self.link_tree, self.host, collapsed).fill(entries)
         self.sub_title = self.page.title_with_time()
         mode = ("Baum" if tree_mode else "Liste") + (", A-Z" if sort else "")
@@ -93,16 +93,16 @@ class LinkTreeApp(App):
     @on(Tree.NodeCollapsed, "#links")
     @on(Tree.NodeExpanded, "#links")
     def node_toggled(self, event: Tree.NodeCollapsed | Tree.NodeExpanded) -> None:
-        """Auf-/Zuklappen je Seite merken (nur Zugeklapptes wird gespeichert)."""
+        """Auf-/Zuklappen fuer alle Seiten merken (nur Zugeklapptes wird gespeichert)."""
         path = self.node_paths.get(event.node.id)
         if not path or not self.settings.tree:
             return
-        paths = set(self.settings.collapsed.get(self.page.stable_url, []))
+        paths = set(self.settings.collapsed.paths)
         if isinstance(event, Tree.NodeCollapsed):
             paths.add(path)
         else:
             paths.discard(path)
-        self.settings.set_collapsed(self.page.stable_url, paths)
+        self.settings.collapsed.set_global(paths)
 
     @on(Tree.NodeSelected, "#links")
     def node_selected(self, event: Tree.NodeSelected) -> None:

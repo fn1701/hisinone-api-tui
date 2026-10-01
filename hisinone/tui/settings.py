@@ -7,6 +7,7 @@ from pathlib import Path
 from hisinone.explore.page_cache import CacheOptions
 from hisinone.explore.table_model import TreeTable
 
+from .collapsed import CollapsedNodes
 from .config import write_config
 from .page_config import PageConfig, TablePrefs
 from .shortcuts import Shortcut, default_shortcuts
@@ -24,9 +25,7 @@ class Settings:
     shortcuts: list[Shortcut] = field(default_factory=default_shortcuts)
     shortcuts_from_file: bool = False  # False -> beim Beenden einmal schreiben
     pages: dict[str, PageConfig] = field(default_factory=dict)  # Schluessel = stabile URL
-    # Link-Baum: zugeklappte Knoten je Seite als Pfade "Eltern › Kind";
-    # alles andere ist aufgeklappt
-    collapsed: dict[str, list[str]] = field(default_factory=dict)
+    collapsed: CollapsedNodes = field(default_factory=CollapsedNodes)  # Link-Baum
     # alte Config (Tabellen ohne Seite): beim ersten Treffer in die Seite uebernehmen
     legacy_tables: dict[str, dict] = field(default_factory=dict)
 
@@ -42,7 +41,7 @@ class Settings:
                 ttl_seconds=int(config.get("cache_ttl", 0)),
                 min_load_ms=int(config.get("cache_min_load_ms", 250)),
             ),
-            collapsed=dict(config.get("collapsed", {})),
+            collapsed=CollapsedNodes.from_config(config),
             legacy_tables=dict(config.get("tables", {})),
         )
         if "shortcuts" in config:
@@ -60,7 +59,9 @@ class Settings:
                   "shortcuts": [s.to_dict() for s in self.shortcuts],
                   "pages": {url: page.to_dict() for url, page in self.pages.items()}}  # fmt: skip
         if with_collapsed:
-            config["collapsed"] = self.collapsed
+            config["collapsed"] = self.collapsed.paths
+        if self.collapsed.overrides:  # nur aus der Datei, unveraendert zurueck
+            config["collapsed_overrides"] = self.collapsed.overrides_dict()
         if self.legacy_tables:
             config["tables"] = self.legacy_tables
         return config
@@ -73,12 +74,6 @@ class Settings:
             if key in self.legacy_tables and key not in prefs:
                 prefs[key] = TablePrefs.from_dict(self.legacy_tables.pop(key))
         return prefs
-
-    def set_collapsed(self, url: str, paths: set[str]) -> None:
-        if paths:
-            self.collapsed[url] = sorted(paths)
-        else:
-            self.collapsed.pop(url, None)
 
 
 class ConfigWriter:
