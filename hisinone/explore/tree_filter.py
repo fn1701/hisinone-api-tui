@@ -1,7 +1,7 @@
 """Zeilenfilter fuer Baum-Tabellen: eine Zeile passt, wenn der Filter auf sie
 samt ihren Eltern passt (so gilt ein Treffer im Modul fuer alles darunter,
-und "enthaelt nicht" blendet ganze Teilbaeume aus). Gezeigt werden die
-Treffer und, als Zusammenhang, ihre Eltern.
+und ein Ausschluss wie ``^(?!.*Bestanden)`` blendet ganze Teilbaeume aus).
+Gezeigt werden die Treffer und, als Zusammenhang, ihre Eltern.
 
 Zwei Arten: normal ("Text" / "Spalte=Wert", siehe row_filter) oder ein
 regulaerer Ausdruck (Python ``re``, Gross-/Kleinschreibung egal) auf der
@@ -17,9 +17,12 @@ from .table_model import Row
 PathTest = Callable[[list[Row]], bool]  # Zeile mit Eltern (Wurzel zuerst) -> passt?
 
 
-def filter_tree(rows: list[Row], cols: list[str], query: str, regex: bool) -> list[Row]:
-    """Treffer plus Eltern in Baum-Reihenfolge; regex=True: re.error bei
-    ungueltigem Ausdruck (der Aufrufer zeigt dann das alte Ergebnis)."""
+def filter_tree(
+    rows: list[Row], cols: list[str], query: str, regex: bool, parents: bool = True
+) -> list[Row]:
+    """Treffer plus Eltern (parents=False: nur die Treffer, fuer die flache
+    Liste) in Baum-Reihenfolge. regex=True: re.error bei ungueltigem Ausdruck
+    (der Aufrufer zeigt dann das alte Ergebnis)."""
     test: PathTest = _RegexTest(cols, query) if regex else _TermsTest(cols, query)
     keep = [False] * len(rows)
     path: list[int] = []  # Indizes der Eltern und der Zeile selbst
@@ -27,7 +30,7 @@ def filter_tree(rows: list[Row], cols: list[str], query: str, regex: bool) -> li
         del path[row.get("tiefe", 0) :]
         path.append(index)
         if test([rows[step] for step in path]):
-            for step in path:
+            for step in path if parents else path[-1:]:
                 keep[step] = True
     return [row for row, kept in zip(rows, keep, strict=True) if kept]
 

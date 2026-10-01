@@ -56,7 +56,7 @@ class PlannerControls(Vertical):
     def _filter_select(self, index: int, filter_field: FilterField) -> Select:
         options = [(label, value) for value, label in filter_field.options]
         values = [value for value, _ in filter_field.options]
-        value = self.choice.filters.get(filter_field.name, filter_field.selected)
+        value = self.choice.filters.get(filter_field.name, filter_field.current)
         value = value if value in values else values[0]
         return Select(options, value=value, allow_blank=False, id=f"filter-{index}")
 

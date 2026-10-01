@@ -1,4 +1,5 @@
-"""Basisklasse: Bildschirm mit Zeilenfilter und Vorschlagsliste darunter."""
+"""Basisklasse: Bildschirm mit Zeilenfilter und Vorschlagsliste darunter;
+mit Regex stehen dort Beispiel-Ausdruecke statt "Spalte=Wert"."""
 
 from textual import on
 from textual.binding import Binding
@@ -11,6 +12,15 @@ SUGGEST_CSS = """
            border: tall $accent; background: $panel; }
 #suggest.shown { display: block; }
 """
+
+# (Beschreibung, Ausdruck); Zeile = "Spalte=Wert | ..." samt Eltern davor
+REGEX_EXAMPLES = [
+    ("enthaelt Bestanden", "Bestanden"),
+    ("enthaelt nicht Bestanden", "^(?!.*Bestanden)"),
+    ("PL, aber nicht Bestanden", r"^(?=.*\bPL\b)(?!.*Bestanden)"),
+    ("Spalte A = Bestanden", r"\bA=Bestanden"),
+    ("eins von beiden", "Mathe|Programm"),
+]
 
 
 class FilterScreen(Screen):
@@ -47,10 +57,19 @@ class FilterScreen(Screen):
     def update_suggest(self) -> None:
         if not self.suggest_list.has_class("shown"):
             return
+        if self.app.settings.regex:
+            self._show_examples()
+            return
         typed = self.last_term().lower()
         options = [text for text in self.suggestions() if typed in text.lower()][:100]
         self.suggest_list.clear_options()
         self.suggest_list.add_options(options or [Option("(keine Vorschlaege)", disabled=True)])
+
+    def _show_examples(self) -> None:
+        """Ausdruck als id: Auswahl ersetzt das Feld (keine Begriffe)."""
+        self.suggest_list.clear_options()
+        for label, pattern in REGEX_EXAMPLES:
+            self.suggest_list.add_option(Option(f"{pattern}   ({label})", id=pattern))
 
     def show_suggest(self) -> None:
         self.suggest_list.add_class("shown")
@@ -72,6 +91,12 @@ class FilterScreen(Screen):
 
     @on(OptionList.OptionSelected, "#suggest")
     def suggestion_picked(self, event: OptionList.OptionSelected) -> None:
+        if event.option.id:  # Regex-Beispiel: ersetzt das ganze Feld
+            pattern = event.option.id
+            self.filter_input.value = pattern
+            self.filter_input.cursor_position = len(pattern)
+            self.filter_input.focus()
+            return
         self.replace_last_term(str(event.option.prompt) + " ")
 
     @on(DataTable.HeaderSelected)

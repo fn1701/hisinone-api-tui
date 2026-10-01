@@ -20,13 +20,3 @@ class PlannerChoice:
     def course_id(self, courses: list[Course]) -> str:
         """Link-id in dieser Seite; "" = nicht (mehr) da, dann der erste."""
         return next((course.link_id for course in courses if course.label == self.course), "")
-
-
-@dataclass
-class PlannerCourse:
-    """Kind-Knoten unter "Studienplaner" im Link-Baum; label/url wie ein Link,
-    damit die Infospalte ihn anzeigen kann."""
-
-    page: object  # CurrentPage der Planer-Seite
-    label: str
-    url: str

@@ -8,6 +8,7 @@ die Infofelder werden nach Position zu Spalten "1", "2", ..., die Plaketten zu
 """
 
 import re
+from collections.abc import Callable
 
 from .html_text import attribute, text_of
 from .table_model import Row, TreeTable
@@ -20,7 +21,7 @@ BADGE = re.compile(r'<[^>]*class="[^"]*\bbadge_character\b[^"]*"[^>]*>')
 SEPARATOR = re.compile(r'<img\b[^>]*\balt="\|"[^>]*>')
 NODE_KIND = re.compile(r'class="node-container StudyPlanner(\w+?)NodeData')
 TITLE_COL = "Titel"
-STATUS_COL = "Status"
+ColumnName = Callable[[int], str]  # Position (ab 1) -> Spaltenname
 
 
 def parse_planner_tree(html: str) -> list[TreeTable]:
@@ -39,31 +40,44 @@ def _parse_row(part: str) -> Row:
     row[TITLE_COL] = text_of(title.group(1)) if title else ""
     info = INFO.search(part)
     fields = [text_of(field) for field in SEPARATOR.split(info.group(1))] if info else []
-    _numbered(row, "", [field for field in fields if field])
+    _numbered(row, [field for field in fields if field], _info_name)
     badges = [attribute(tag, "title") for tag in BADGE.findall(part)]
-    _numbered(row, f"{STATUS_COL} ", [badge for badge in badges if badge])
+    _numbered(row, [badge for badge in badges if badge], _badge_name)
     kind = NODE_KIND.search(part)
     row["typ"] = kind.group(1) if kind else ""
     return row
 
 
-def _numbered(row: Row, prefix: str, values: list[str]) -> None:
+def _numbered(row: Row, values: list[str], name: ColumnName) -> None:
     for index, value in enumerate(values, start=1):
-        row[f"{prefix}{index}"] = value
+        row[name(index)] = value
+
+
+def _info_name(index: int) -> str:
+    """Info-Felder nach Position: 1, 2, 3, ..."""
+    return str(index)
+
+
+def _badge_name(index: int) -> str:
+    """Badges nach Position: A, B, ..., Z, AA, AB, ... (wie Tabellenspalten)."""
+    name = ""
+    while index:
+        index, rest = divmod(index - 1, 26)
+        name = chr(ord("A") + rest) + name
+    return name
 
 
 def _columns(rows: list[Row]) -> list[str]:
-    """Titel, dann so viele Info- und Status-Spalten, wie es Werte gibt."""
-    info = _count(rows, "")
-    status = _count(rows, f"{STATUS_COL} ")
-    cols = [TITLE_COL] + [str(index) for index in range(1, info + 1)]
-    return cols + [f"{STATUS_COL} {index}" for index in range(1, status + 1)]
+    """Titel, dann so viele Info- und Badge-Spalten, wie es Werte gibt."""
+    info = [_info_name(index) for index in range(1, _count(rows, _info_name) + 1)]
+    badges = [_badge_name(index) for index in range(1, _count(rows, _badge_name) + 1)]
+    return [TITLE_COL] + info + badges
 
 
-def _count(rows: list[Row], prefix: str) -> int:
-    """Hoechste Nummer einer Spalte mit diesem Praefix in allen Zeilen."""
+def _count(rows: list[Row], name: ColumnName) -> int:
+    """Hoechste Position einer Spalte dieser Art in allen Zeilen."""
     count = 0
     for row in rows:
-        while f"{prefix}{count + 1}" in row:
+        while name(count + 1) in row:
             count += 1
     return count

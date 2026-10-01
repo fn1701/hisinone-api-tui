@@ -1,7 +1,7 @@
 """Anzeige-Zustand einer Tabelle im Vollbild (ohne Oberflaeche)."""
 
 from hisinone.explore.exams import latest_attempts_tree
-from hisinone.explore.table_model import TreeTable
+from hisinone.explore.table_model import Row, TreeTable
 from hisinone.explore.tree_filter import filter_tree
 from hisinone.explore.tree_fold import ShownRow, TreeFold
 
@@ -22,7 +22,14 @@ class TableViewState:
         self.custom_on = prefs.custom_on and bool(table.custom)
         self.latest = prefs.latest
         self.filter = prefs.filter
-        self.col_widths: dict[str, int] = {}  # Spalten wachsen nur (kein Springen)
+        self.flat = prefs.flat  # flache Liste: alle Zeilen ohne Einrueckung/Auf-Zu
+        # Spalten wachsen beim Auf-/Zuklappen nur (kein Springen); neuer Filter
+        # oder Alle auf/zu: neu aus dem Gezeigten
+        self.col_widths: dict[str, int] = {}
+        self._last_query: tuple[str, bool, bool] | None = None
+        # Filterergebnis: eigener Auf-/Zu-Zustand, startet offen, neu je Filter
+        self.filter_fold = TreeFold(set())
+        self.matched: list[Row] | None = None  # None = kein Filter aktiv
         self.fold_changed = prefs.folded is not None  # sonst Startzustand, nicht merken
         self.fold = TreeFold(set(prefs.folded or []))
         if not self.fold_changed and table.start_folded:
@@ -53,32 +60,57 @@ class TableViewState:
         self.col_choice = chosen + hidden_custom
 
     def shown(self, regex: bool = False) -> list[ShownRow]:
-        """Sichtbare Zeilen; mit Filter alle Treffer samt Eltern, egal ob
-        zugeklappt. regex: re.error bei ungueltigem Ausdruck."""
+        """Sichtbare Zeilen; mit Filter die Treffer samt Eltern (eigener
+        Auf-/Zu-Zustand). regex: re.error bei ungueltigem Ausdruck."""
+        if (self.filter, regex, self.flat) != self._last_query:
+            self.col_widths.clear()
+            self.filter_fold = TreeFold(set())
+            self._last_query = (self.filter, regex, self.flat)
         rows = latest_attempts_tree(self.table.rows) if self.latest else self.table.rows
+        self.matched = None
+        if self.flat:
+            return self._flat(rows, regex)
         if self.filter.strip():
-            matched = filter_tree(rows, self.filter_cols(), self.filter, regex)
-            return [ShownRow(row, "", "") for row in matched]
+            self.matched = filter_tree(rows, self.filter_cols(), self.filter, regex)
+            return self.filter_fold.visible(self.matched, self.table.title_col)
         return self.fold.visible(rows, self.table.title_col)
 
+    def _flat(self, rows: list[Row], regex: bool) -> list[ShownRow]:
+        """Alle Zeilen bzw. nur die Treffer (ohne Eltern); Markierung "" =
+        nicht einruecken."""
+        if self.filter.strip():
+            rows = filter_tree(rows, self.filter_cols(), self.filter, regex, parents=False)
+        return [ShownRow(row, "", "") for row in rows]
+
     def toggle_node(self, key: str) -> None:
+        if self.matched is not None:
+            self.filter_fold.toggle(key)
+            return
         self.fold.toggle(key)
         self.fold_changed = True
 
     def fold_all(self, folded: bool) -> None:
         """True = alles bis auf die oberste Ebene zu, False = alles auf."""
-        if folded:
-            self.fold.fold_all(self.table.rows, self.table.title_col)
-        else:
-            self.fold.unfold_all()
+        self.col_widths.clear()
+        if self.matched is not None:
+            self._set_all(self.filter_fold, self.matched, folded)
+            return
+        self._set_all(self.fold, self.table.rows, folded)
         self.fold_changed = True
+
+    def _set_all(self, fold: TreeFold, rows: list[Row], folded: bool) -> None:
+        if folded:
+            fold.fold_all(rows, self.table.title_col)
+        else:
+            fold.unfold_all()
 
     def remember(self) -> None:
         """In die Seiten-Einstellungen schreiben; den Standardzustand nicht
         (blosses Oeffnen ist keine Aenderung)."""
         self.latest = self.latest and self.can_latest
         folded = sorted(self.fold.folded) if self.fold_changed else None
-        prefs = TablePrefs(self.col_choice, self.custom_on, self.latest, self.filter, folded)
+        prefs = TablePrefs(self.col_choice, self.custom_on, self.latest, self.filter, folded,
+                           self.flat)  # fmt: skip
         default = TablePrefs(self.table.cols + self.table.custom)
         if prefs == default:
             self.page_prefs.pop(self.table.prefs_key, None)
@@ -86,5 +118,6 @@ class TableViewState:
             self.page_prefs[self.table.prefs_key] = prefs
 
     def flags(self) -> list[str]:
-        named = (("eigene Spalten", self.custom_on), ("letzter Versuch", self.latest))
+        named = (("eigene Spalten", self.custom_on), ("letzter Versuch", self.latest),
+                 ("flach", self.flat))  # fmt: skip
         return [name for name, is_on in named if is_on]

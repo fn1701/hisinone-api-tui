@@ -14,6 +14,7 @@ from textual import work
 
 from hisinone.explore.page_tables import load_tables
 from hisinone.explore.planner_courses import parse_courses
+from hisinone.explore.planner_filter import parse_filters
 from hisinone.noten import HISinOneError
 
 from .current_page import CurrentPage, LoadedTables
@@ -28,11 +29,10 @@ class PlannerLoading:
 
     planner_choices: dict[str, PlannerChoice]  # stabile URL -> zuletzt gewaehlt
 
-    def show_planner(self, page: CurrentPage, course: str = "") -> None:
-        """Zwischenseite; gleich laden, wenn der Studiengang klar ist (nur
-        einer, im Baum gewaehlt oder schon einmal gewaehlt)."""
-        choice = self.planner_choices.get(page.stable_url, PlannerChoice())
-        choice = dataclasses.replace(choice, course=course or choice.course)
+    def show_planner(self, page: CurrentPage) -> None:
+        """Planer-Seite; gleich laden, wenn der Studiengang klar ist (nur
+        einer oder schon einmal gewaehlt)."""
+        choice = self.planner_choices.get(page.stable_url) or _page_choice(page)
         self.planner_screen = PlannerScreen(page, choice)
         self.push_screen(self.planner_screen)
         if choice.course or len(parse_courses(page.html)) == 1:
@@ -59,18 +59,21 @@ class PlannerLoading:
         if not result:
             self.call_from_thread(self._planner_loaded, dialog, page, [], None, None)
             return
-        shown, tables, html = result
-        self.store.put_tables(key, shown, tables, time.monotonic() - started)
+        shown, tables, html, used = result  # used: ggf. auf die Seite zurueckgesetzt
+        self.planner_choices[page.stable_url] = used
+        self.store.put_tables(used.cache_key(page.stable_url), shown, tables,
+                              time.monotonic() - started)  # fmt: skip
         refreshed = self._refresh_planner_page(shown, dialog)
         self.call_from_thread(self._planner_loaded, dialog, shown, tables, html, refreshed)
 
     def _load_planner(self, page: CurrentPage, choice: PlannerChoice, dialog: LoadingDialog):
-        """(Seite, Tabellen, HTML) oder None; eine Seite aus dem Cache hat einen
-        alten ViewState, daher vor den Klicks frisch holen."""
+        """(Seite, Tabellen, HTML, verwendete Wahl) oder None; eine Seite aus dem
+        Cache hat einen alten ViewState, daher vor den Klicks frisch holen."""
         progress = functools.partial(self.call_from_thread, dialog.step)
         try:
             if page.from_cache and not (page := self._fresh_page(page, progress)):
                 return None
+            choice = self._usable_choice(page, choice)
             course_id = choice.course_id(parse_courses(page.html))
             tables, html = load_tables(self.session, page.server_url, page.html,
                                        self.client.timeout, True, choice.filters, progress,
@@ -79,7 +82,19 @@ class PlannerLoading:
             self.call_from_thread(self.notify, f"Laden fehlgeschlagen: {error}",
                                   severity="error")  # fmt: skip
             return None
-        return dataclasses.replace(page, pulled_at=time.time(), from_cache=False), tables, html
+        shown = dataclasses.replace(page, pulled_at=time.time(), from_cache=False)
+        return shown, tables, html, choice
+
+    def _usable_choice(self, page: CurrentPage, choice: PlannerChoice) -> PlannerChoice:
+        """Fehlt ein gewaehlter Filter in der Seite (Studiensemester gibt es erst,
+        wenn in dieser Sitzung ein Studiengang gewaehlt ist), gelten die Werte
+        der Seite - sonst ignoriert der Server ihn und der Cache-Eintrag luegt."""
+        names = {filter_field.name for filter_field in parse_filters(page.html)}
+        if set(choice.filters) <= names:
+            return choice
+        message = "Filter erst nach dem ersten Laden verfuegbar - Standard geladen."
+        self.call_from_thread(self.notify, message, severity="warning")
+        return dataclasses.replace(_page_choice(page), course=choice.course)
 
     def _fresh_page(self, page: CurrentPage, progress) -> CurrentPage | None:
         progress("Seite neu holen")
@@ -108,3 +123,11 @@ class PlannerLoading:
             self.settings.pages.setdefault(page.stable_url, PageConfig())
             prefs = self.settings.page_tables(page.stable_url, tables)
             self.planner_screen.show_table(page, tables[0], prefs)
+
+
+def _page_choice(page: CurrentPage) -> PlannerChoice:
+    """Ohne gemerkte Wahl (z.B. nach Neustart): die Werte, die die Seite selbst
+    zeigt - sonst stuende in den Listen etwas anderes als geladen wird."""
+    filters = {field.name: field.current for field in parse_filters(page.html)}
+    courses = parse_courses(page.html)
+    return PlannerChoice(courses[0].label if courses else "", filters)

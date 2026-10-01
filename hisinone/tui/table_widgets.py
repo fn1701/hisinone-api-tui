@@ -63,7 +63,7 @@ def fill_table(widget: DataTable, table: TreeTable, rows: list[Row], cols: list[
     wachsen nur (None = DataTable misst selbst)."""
     widget.clear(columns=True)
     custom = set(table.custom)
-    cells = [_row_cells(row, cols, (table.title_col, marks[index] if marks else ""), custom)
+    cells = [_row_cells(row, cols, (table.title_col, marks[index] if marks else None), custom)
              for index, row in enumerate(rows)]  # fmt: skip
     if widths is not None:
         _grow_widths(widths, cols, cells)
@@ -75,7 +75,8 @@ def fill_table(widget: DataTable, table: TreeTable, rows: list[Row], cols: list[
     widget.set_class(len(rows) > MIN_ROWS, "big")
 
 
-def _row_cells(row: Row, cols: list[str], title: tuple[str, str], custom: set[str]) -> list:
+def _row_cells(row: Row, cols: list[str], title: tuple[str, str | None],
+               custom: set[str]) -> list:  # fmt: skip
     return [_cell(row, col, title, custom) for col in cols]
 
 
@@ -85,12 +86,13 @@ def _grow_widths(widths: dict[str, int], cols: list[str], cells: list[list]) -> 
         widths[col] = max(widths.get(col, 0), cell_len(col), widest)
 
 
-def _cell(row: Row, col: str, title: tuple[str, str], custom: set[str]) -> Text | str:
-    """title = (Titelspalte, Auf-/Zu-Zeichen)."""
+def _cell(row: Row, col: str, title: tuple[str, str | None], custom: set[str]) -> Text | str:
+    """title = (Titelspalte, Auf-/Zu-Zeichen); Zeichen "" = flache Liste
+    (ohne Einrueckung), None = Baum ohne Auf-/Zu."""
     value = str(row.get(col, ""))
     title_col, mark = title
-    if col == title_col:  # Titel eingerueckt wie der Baum, Wurzeln fett
-        text = "  " * row["tiefe"] + mark + value
+    if col == title_col and mark != "":  # Titel eingerueckt wie der Baum, Wurzeln fett
+        text = "  " * row["tiefe"] + (mark or "") + value
         return Text(text, style="bold" if row["tiefe"] == 0 else "")
     if col in custom:
         return Text(value, style=CUSTOM_STYLE)

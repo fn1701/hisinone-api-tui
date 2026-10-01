@@ -1,5 +1,5 @@
 """Eine Tabelle im Vollbild: Zeilenfilter (/), Spalten (k), eigene Spalten (x),
-letzter Versuch (v), Export (e), Knoten auf/zu (Leertaste, +, -)."""
+letzter Versuch (v), Baum/flach (t), Export (e), Knoten auf/zu (Leertaste, +, -)."""
 
 import re
 
@@ -31,6 +31,7 @@ class SingleTableScreen(TableColumns, TableExport, FilterScreen):
         Binding("k", "columns", "Spalten"),
         Binding("x", "toggle_custom", "Eigene Spalten"),
         Binding("v", "toggle_latest", "Letzter Versuch"),
+        Binding("t", "toggle_flat", "Baum/Flach"),
         Binding("e", "export", "Export"),
         Binding("space", "toggle_node", "Auf/Zu"),
         Binding("plus", "fold_all(False)", "Alle auf"),
@@ -109,6 +110,7 @@ class SingleTableScreen(TableColumns, TableExport, FilterScreen):
     @on(Checkbox.Changed, "#regex")
     def regex_toggled(self) -> None:
         self.refresh_table()
+        self.update_suggest()  # Regex an: Beispiele statt Spalte=Wert
 
     @on(Input.Submitted, "#rowfilter")
     def rowfilter_submitted(self) -> None:
@@ -121,14 +123,6 @@ class SingleTableScreen(TableColumns, TableExport, FilterScreen):
 
     def action_focus_filter(self) -> None:
         self.filter_input.focus()
-
-    def action_toggle_custom(self) -> None:
-        self.state.custom_on = not self.state.custom_on
-        self.refresh_table()
-
-    def action_toggle_latest(self) -> None:
-        self.state.latest = not self.state.latest
-        self.refresh_table()
 
     @on(DataTable.RowSelected)
     def row_clicked(self, event: DataTable.RowSelected) -> None:  # Klick/Enter = Leertaste

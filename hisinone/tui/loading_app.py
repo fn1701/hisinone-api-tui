@@ -21,11 +21,10 @@ from .link_app import LinkTreeApp
 from .page_config import PageConfig
 from .page_store import PageStore
 from .planner_app import PlannerLoading
-from .planner_nodes import PlannerNodes
 from .table_display import TableDisplay
 
 
-class LoadingApp(PlannerLoading, PlannerNodes, TableDisplay, LinkTreeApp):
+class LoadingApp(PlannerLoading, TableDisplay, LinkTreeApp):
     def __init__(self, settings):
         super().__init__(settings)
         self.session: requests.Session | None = None
@@ -70,6 +69,14 @@ class LoadingApp(PlannerLoading, PlannerNodes, TableDisplay, LinkTreeApp):
         page = CurrentPage(clean_url(url), name, response.url, response.text,
                            pulled_at=time.time())  # fmt: skip
         self.call_from_thread(self.enter_page, page, push)
+        tables = self._fetched_tables(page, open_col)
+        self.store.put(page, tables, time.monotonic() - started)
+
+    def _fetched_tables(self, page: CurrentPage, open_col: str) -> list[TreeTable]:
+        """Tabellen der neu geladenen Seite zeigen (je nach Config)."""
+        if is_study_planner(page.html):  # Baum erst nach Studiengang/Filtern
+            self.call_from_thread(self.show_planner, page)
+            return []
         config = self._page_config(page) if has_tables(page.html) else None
         tables = []
         if config and config.view == "table":
@@ -77,7 +84,7 @@ class LoadingApp(PlannerLoading, PlannerNodes, TableDisplay, LinkTreeApp):
         elif open_col:
             self.call_from_thread(self.notify, "Keine Tabelle auf der Seite (abgemeldet?).",
                                   severity="warning")  # fmt: skip
-        self.store.put(page, tables, time.monotonic() - started)
+        return tables
 
     def _show_cached(self, stable_url: str, push: bool, open_col: str) -> bool:
         """Seite (und ggf. Tabellen) aus dem Cache zeigen; False = nicht da."""
@@ -128,10 +135,7 @@ class LoadingApp(PlannerLoading, PlannerNodes, TableDisplay, LinkTreeApp):
         return config
 
     def _load_tables(self, page: CurrentPage, open_col: str, expand: bool) -> list[TreeTable]:
-        """Wenn moeglich einmal "Alle aufklappen" (wie ein Klick im Browser);
-        der Studienplaner zeigt erst seine Filter."""
-        if is_study_planner(page.html):
-            return self.call_from_thread(self.show_planner, page) or []
+        """Wenn moeglich einmal "Alle aufklappen" (wie ein Klick im Browser)."""
         try:
             tables, html = load_tables(self.session, page.server_url, page.html,
                                        self.client.timeout, expand)  # fmt: skip

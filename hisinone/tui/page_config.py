@@ -27,6 +27,7 @@ class TablePrefs:
     latest: bool = False  # nur letzter Versuch
     filter: str = ""  # Zeilenfilter
     folded: list[str] | None = None  # zugeklappte Knoten, None = Startzustand
+    flat: bool = False  # flache Liste statt Baum (Taste t)
 
     @classmethod
     def from_dict(cls, data: dict) -> "TablePrefs":
@@ -36,6 +37,7 @@ class TablePrefs:
             latest=_typed(data, "latest", bool, False),
             filter=_typed(data, "filter", str, ""),
             folded=_typed(data, "folded", list, None),
+            flat=_typed(data, "flat", bool, False),
         )
 
     def to_dict(self) -> dict:

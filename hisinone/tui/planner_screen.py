@@ -23,6 +23,7 @@ class PlannerScreen(SingleTableScreen):
     BINDINGS = [
         Binding("l", "load(False)", "Übernehmen"),
         Binding("r", "load(True)", "Neu laden"),
+        Binding("f", "fullscreen", "Vollbild"),
     ]
 
     def __init__(self, page, choice: PlannerChoice):
@@ -45,6 +46,15 @@ class PlannerScreen(SingleTableScreen):
         das naechste Laden, das deren Seitenleiste abschickt."""
         self.page = page
         self.query_one(PlannerControls).set_page(page, choice)
+
+    def action_fullscreen(self) -> None:
+        """Dieselbe Tabelle ohne Studiengang/Filter; Einstellungen gemeinsam."""
+        self.app.push_screen(SingleTableScreen(self.page_name, self.table, self.state.page_prefs))
+
+    def on_screen_resume(self) -> None:
+        """Zurueck aus dem Vollbild: dort geaenderte Filter/Spalten uebernehmen."""
+        if self.table.rows:
+            self.show_table(self.page, self.table, self.state.page_prefs)
 
     @on(Button.Pressed, "#load")
     def load_pressed(self) -> None:

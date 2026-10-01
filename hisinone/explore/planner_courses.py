@@ -8,8 +8,6 @@ from dataclasses import dataclass
 CONTENT = "studyPlanner:container:content-container"
 COURSE_LINK = re.compile(rf'<a\b[^>]*\bid="({CONTENT}:studentCourseOfStudySelection:[^"]*'
                          r':doChangeDepp)"[^>]*>(.*?)</a>', re.S)  # fmt: skip
-# Standard-Flow von HISinOne (nicht hochschulspezifisch): erkennt den Link zum Planer
-PLANNER_FLOW = "_flowId=studyPlanner-flow"
 
 
 @dataclass
@@ -28,10 +26,6 @@ class Course:
 def parse_courses(html: str) -> list[Course]:
     """Alle Studiengaenge der Seite in Seitenreihenfolge."""
     return [Course(match.group(1), _text(match.group(2))) for match in COURSE_LINK.finditer(html)]
-
-
-def is_planner_url(url: str) -> bool:
-    return PLANNER_FLOW in url
 
 
 def _text(inner_html: str) -> str:

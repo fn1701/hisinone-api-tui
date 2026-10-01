@@ -10,14 +10,12 @@ from textual.widgets import Footer, Header, Input, Static, Tree
 
 from hisinone.explore.link_tree import flat_entries, tree_order
 from hisinone.explore.links import Link, extract_links, match_links
-from hisinone.explore.planner_courses import is_planner_url
 from hisinone.explore.storage import prepare_save_dir, save_html
 
 from .current_page import CurrentPage, LinkCounts, page_info
 from .filter_bar import FilterBar
 from .link_filter import LinkFilter
 from .link_view import LinkTreeFiller, link_details
-from .planner_choice import PlannerCourse
 from .settings import Settings
 
 
@@ -45,9 +43,6 @@ class LinkTreeApp(LinkFilter, App):
 
     def open(self, url: str, name: str, push: bool = True, open_col: str = "") -> None:
         raise NotImplementedError  # in der abgeleiteten Klasse (laedt die Seite)
-
-    def planner_link_selected(self, node, link: Link) -> None:
-        raise NotImplementedError  # Studiengaenge als Kinder (in PlannerNodes)
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -117,16 +112,12 @@ class LinkTreeApp(LinkFilter, App):
 
     @on(Tree.NodeSelected, "#links")
     def node_selected(self, event: Tree.NodeSelected) -> None:
-        link: Link | PlannerCourse | None = event.node.data
-        if isinstance(link, PlannerCourse):
-            self.planner_course_selected(link)
-        elif link is None:
+        link: Link | None = event.node.data
+        if link is None:
             event.node.toggle()  # Gruppen-Ueberschrift
         elif link.needs_confirm:
             self.notify("Keine stabile URL bzw. Abmelden - mit ! trotzdem oeffnen.",
                         severity="warning")  # fmt: skip
-        elif is_planner_url(link.url):
-            self.planner_link_selected(event.node, link)
         else:
             self.open(link.url, link.label)
 

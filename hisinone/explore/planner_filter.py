@@ -30,6 +30,12 @@ class FilterField:
     options: list[tuple[str, str]] = field(default_factory=list)
     selected: str = ""
 
+    @property
+    def current(self) -> str:
+        """Was der Browser zeigt: der gewaehlte Wert, sonst die erste Option."""
+        values = [value for value, _ in self.options]
+        return self.selected if self.selected in values else values[0]
+
 
 def sidebar_form(html: str) -> tuple[str, str] | None:
     """(action, inneres HTML) der Seitenleiste; None, wenn es keine gibt."""
