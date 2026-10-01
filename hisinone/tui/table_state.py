@@ -1,8 +1,8 @@
 """Anzeige-Zustand einer Tabelle im Vollbild (ohne Oberflaeche)."""
 
 from hisinone.explore.exams import latest_attempts_tree
-from hisinone.explore.row_filter import match_rows
 from hisinone.explore.table_model import TreeTable
+from hisinone.explore.tree_filter import filter_tree
 from hisinone.explore.tree_fold import ShownRow, TreeFold
 
 from .page_config import TablePrefs
@@ -52,12 +52,13 @@ class TableViewState:
                          if col in self.col_choice and not self.custom_on]  # fmt: skip
         self.col_choice = chosen + hidden_custom
 
-    def shown(self) -> list[ShownRow]:
-        """Sichtbare Zeilen; mit Filter alle Treffer, egal ob zugeklappt."""
+    def shown(self, regex: bool = False) -> list[ShownRow]:
+        """Sichtbare Zeilen; mit Filter alle Treffer samt Eltern, egal ob
+        zugeklappt. regex: re.error bei ungueltigem Ausdruck."""
         rows = latest_attempts_tree(self.table.rows) if self.latest else self.table.rows
         if self.filter.strip():
-            return [ShownRow(row, "", "") for row in match_rows(rows, self.filter_cols(),
-                                                                 self.filter)]  # fmt: skip
+            matched = filter_tree(rows, self.filter_cols(), self.filter, regex)
+            return [ShownRow(row, "", "") for row in matched]
         return self.fold.visible(rows, self.table.title_col)
 
     def toggle_node(self, key: str) -> None:

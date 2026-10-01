@@ -1,28 +1,30 @@
 """Eine Tabelle im Vollbild: Zeilenfilter (/), Spalten (k), eigene Spalten (x),
 letzter Versuch (v), Export (e), Knoten auf/zu (Leertaste, +, -)."""
 
-from rich.text import Text
+import re
+
 from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import VerticalScroll
-from textual.widgets import DataTable, Footer, Header, Input, OptionList, Static
+from textual.widgets import Checkbox, DataTable, Footer, Header, Input, OptionList, Static
 
 from hisinone.explore.row_filter import filter_suggestions
 from hisinone.explore.table_model import TreeTable
 
-from .dialogs import ColumnsDialog
+from .filter_bar import FilterBar
 from .filter_screen import SUGGEST_CSS, FilterScreen
 from .page_config import TablePrefs
+from .table_columns import TableColumns
 from .table_export import TableExport
 from .table_heights import fit_tables
 from .table_state import TableViewState
-from .table_widgets import CUSTOM_STYLE, TABLES_CSS, ClickTable, TableBar, fill_table
+from .table_widgets import TABLES_CSS, ClickTable, TableBar, fill_table
 
 FILTER_HINT = "Zeilen filtern: Text oder Spalte=Wert, mehrere mit Leerzeichen (↓ = Vorschlaege)"
 
 
-class SingleTableScreen(TableExport, FilterScreen):
+class SingleTableScreen(TableColumns, TableExport, FilterScreen):
     BINDINGS = [
         Binding("escape", "back", "Zurueck"),
         Binding("slash", "focus_filter", "Filter"),
@@ -55,9 +57,14 @@ class SingleTableScreen(TableExport, FilterScreen):
             return self.state.can_latest
         return True
 
+    def compose_top(self) -> ComposeResult:
+        """Platz fuer Bedienelemente ueber dem Filter (Unterklassen)."""
+        yield from ()
+
     def compose(self) -> ComposeResult:
         yield Header()
-        yield Input(self.state.filter, id="rowfilter", placeholder=FILTER_HINT)
+        yield from self.compose_top()
+        yield FilterBar(self.state.filter, "rowfilter", FILTER_HINT)
         yield OptionList(id="suggest")
         with VerticalScroll():
             yield TableBar(0, "", False)
@@ -76,7 +83,12 @@ class SingleTableScreen(TableExport, FilterScreen):
         """Nach jeder Aenderung: merken, filtern, neu fuellen, Titel setzen."""
         self.state.filter = self.filter_input.value
         self.state.remember()
-        self.shown = self.state.shown()
+        try:
+            self.shown = self.state.shown(self.app.settings.regex)
+        except re.error:  # Ausdruck noch unvollstaendig: altes Ergebnis lassen
+            self.query_one(FilterBar).mark_invalid(True)
+            return
+        self.query_one(FilterBar).mark_invalid(False)
         self.shown_rows = [shown.row for shown in self.shown]
         fill_table(self.query_one(DataTable), self.table, self.shown_rows,
                    self.state.active_cols(), [shown.mark for shown in self.shown],
@@ -93,6 +105,10 @@ class SingleTableScreen(TableExport, FilterScreen):
     def rowfilter_changed(self) -> None:
         self.refresh_table()
         self.update_suggest()
+
+    @on(Checkbox.Changed, "#regex")
+    def regex_toggled(self) -> None:
+        self.refresh_table()
 
     @on(Input.Submitted, "#rowfilter")
     def rowfilter_submitted(self) -> None:
@@ -113,23 +129,6 @@ class SingleTableScreen(TableExport, FilterScreen):
     def action_toggle_latest(self) -> None:
         self.state.latest = not self.state.latest
         self.refresh_table()
-
-    def action_columns(self) -> None:
-        self.app.push_screen(ColumnsDialog(self._column_options()), self._columns_chosen)
-
-    def _column_options(self) -> list[tuple]:
-        chosen = self.state.col_choice
-        options = [(col, col, col in chosen) for col in self.table.cols]
-        if self.state.custom_on:
-            for col in self.table.custom:
-                label = Text(f"{col} (eigene)", style=CUSTOM_STYLE)
-                options.append((label, col, col in chosen))
-        return options
-
-    def _columns_chosen(self, chosen: list[str] | None) -> None:
-        if chosen:
-            self.state.choose_cols(chosen)
-            self.refresh_table()
 
     @on(DataTable.RowSelected)
     def row_clicked(self, event: DataTable.RowSelected) -> None:  # Klick/Enter = Leertaste

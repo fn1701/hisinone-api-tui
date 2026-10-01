@@ -25,11 +25,20 @@ class ExploreApp(NavigationApp):
         Binding("s", "toggle_save", "Speichern an/aus", show=False),
         Binding("escape", "focus_tree", "", show=False),
         Binding("q", "quit", "Beenden", show=False),
+        Binding("ctrl+r", "toggle_regex", "Regex an/aus", show=False, priority=True),
     ]
 
     def __init__(self, settings: Settings, writer: ConfigWriter):
         super().__init__(settings)
         self.writer = writer
+
+    def action_toggle_regex(self) -> None:
+        """Wie Klick auf die Checkbox (gilt fuer alle Seiten)."""
+        boxes = self.screen.query("#regex")
+        if boxes:
+            boxes.first().toggle()
+        else:
+            self.settings.regex = not self.settings.regex
 
     def check_action(self, action: str, parameters) -> bool | None:
         # Tasten der Link-Ansicht nur dort (Tabellen-Bildschirme haben eigene)

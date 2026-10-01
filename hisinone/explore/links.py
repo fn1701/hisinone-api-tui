@@ -110,3 +110,16 @@ class LinkCollector:
         known = self.found.get(url)
         if known is None or len(label) > len(known.label):
             self.found[url] = Link(label, url, flow_bound)
+
+
+def match_links(links: list[Link], query: str, regex: bool) -> list[Link]:
+    """Links, deren Beschriftung oder URL passt (Text oder regulaerer
+    Ausdruck, Gross-/Kleinschreibung egal); re.error bei ungueltigem."""
+    if not query:
+        return links
+    if regex:
+        pattern = re.compile(query, re.IGNORECASE)
+        return [link for link in links if pattern.search(f"{link.label} {link.url}")]
+    text = query.casefold()
+    return [link for link in links
+            if text in link.label.casefold() or text in link.url.casefold()]  # fmt: skip

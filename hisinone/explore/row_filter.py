@@ -14,7 +14,7 @@ def _terms(query: str) -> list[str]:
         return query.replace('"', " ").split()
 
 
-def _checks(cols: list[str], query: str) -> list[tuple[list[str], str]]:
+def parse_checks(cols: list[str], query: str) -> list[tuple[list[str], str]]:
     """[(Spalten, in denen gesucht wird, gesuchter Text)] je Begriff."""
     by_name = {col.lower(): col for col in cols}
     checks = []
@@ -36,7 +36,7 @@ def _matches(row: Row, checks: list[tuple[list[str], str]]) -> bool:
 def match_rows(rows: list[Row], cols: list[str], query: str) -> list[Row]:
     """ "Spalte=Wert" sucht nur in dieser Spalte, sonst in allen. Werte mit
     Leerzeichen in Anfuehrungszeichen."""
-    checks = _checks(cols, query)
+    checks = parse_checks(cols, query)
     return [row for row in rows if _matches(row, checks)]
 
 

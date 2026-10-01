@@ -1,5 +1,6 @@
 """Unterste Schicht der App: Link-Baum, Filterfeld und Infospalte."""
 
+import re
 from pathlib import Path
 
 from textual import on
@@ -8,19 +9,21 @@ from textual.containers import Horizontal, VerticalScroll
 from textual.widgets import Footer, Header, Input, Static, Tree
 
 from hisinone.explore.link_tree import flat_entries, tree_order
-from hisinone.explore.links import Link, extract_links
+from hisinone.explore.links import Link, extract_links, match_links
 from hisinone.explore.planner_courses import is_planner_url
 from hisinone.explore.storage import prepare_save_dir, save_html
 
 from .current_page import CurrentPage, LinkCounts, page_info
+from .filter_bar import FilterBar
+from .link_filter import LinkFilter
 from .link_view import LinkTreeFiller, link_details
 from .planner_choice import PlannerCourse
 from .settings import Settings
 
 
-class LinkTreeApp(App):
+class LinkTreeApp(LinkFilter, App):
     CSS = """
-    #filter { dock: top; }
+    FilterBar { dock: top; }
     #links { width: 2fr; }
     #details { width: 1fr; border-left: solid $primary; padding: 0 1; }
     """
@@ -48,7 +51,7 @@ class LinkTreeApp(App):
 
     def compose(self) -> ComposeResult:
         yield Header()
-        yield Input(placeholder="Filter (Name oder URL) ...", id="filter")
+        yield FilterBar("", "filter", "Filter (Name oder URL) ...")
         with Horizontal():
             yield Tree("Anmelden ...", id="links")
             with VerticalScroll(id="details"):
@@ -80,12 +83,15 @@ class LinkTreeApp(App):
     def rebuild(self) -> None:
         """Baut Baum/Liste aus der aktuellen Seite neu auf (auch nach Filter/Toggle)."""
         tree_mode, sort = self.settings.tree, self.settings.sort
-        text = self.query_one("#filter", Input).value.strip().casefold()
+        text = self.query_one("#filter", Input).value.strip()
         links = extract_links(self.page.html, self.page.server_url, sort=sort and not tree_mode)
         total = len(links)
-        if text:
-            links = [link for link in links
-                     if text in link.label.casefold() or text in link.url.casefold()]  # fmt: skip
+        try:
+            links = match_links(links, text, self.settings.regex)
+        except re.error:  # Ausdruck noch unvollstaendig: Baum so lassen
+            self.query_one(FilterBar).mark_invalid(True)
+            return
+        self.query_one(FilterBar).mark_invalid(False)
         entries = tree_order(links, sort=sort) if tree_mode else flat_entries(links)
         collapsed = self.settings.collapsed.for_page(self.page.stable_url)
         self.node_paths = LinkTreeFiller(self.link_tree, self.host, collapsed).fill(entries)
@@ -127,22 +133,3 @@ class LinkTreeApp(App):
     @on(Tree.NodeHighlighted, "#links")
     def node_highlighted(self, event: Tree.NodeHighlighted) -> None:
         self.query_one("#link", Static).update(link_details(event.node.data, self.host))
-
-    @on(Input.Changed, "#filter")
-    def filter_changed(self) -> None:
-        if self.page.html:
-            self.rebuild()
-
-    @on(Input.Submitted, "#filter")
-    def filter_submitted(self) -> None:
-        self.action_focus_tree()
-
-    def action_focus_filter(self) -> None:
-        field = self.query_one("#filter", Input)
-        if self.focused is field:
-            field.insert_text_at_cursor("/")  # im Filterfeld ist "/" normaler Text
-        else:
-            field.focus()
-
-    def action_focus_tree(self) -> None:
-        self.link_tree.focus()

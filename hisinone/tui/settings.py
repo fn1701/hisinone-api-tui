@@ -19,6 +19,7 @@ DEFAULT_SAVE_PATH = "/tmp/hisinone-explore"
 class Settings:
     tree: bool = True
     sort: bool = False
+    regex: bool = False  # Filter als regulaerer Ausdruck (alle Seiten)
     save_path: str = DEFAULT_SAVE_PATH
     save_on: bool = False
     cache: CacheOptions = field(default_factory=CacheOptions)
@@ -34,6 +35,7 @@ class Settings:
         settings = cls(
             tree=config.get("tree", True),
             sort=config.get("sort", False),
+            regex=bool(config.get("regex", False)),
             save_path=config.get("save_path", DEFAULT_SAVE_PATH),
             save_on=config.get("save_on", False),
             cache=CacheOptions(
@@ -52,7 +54,8 @@ class Settings:
         return settings
 
     def to_config(self, with_collapsed: bool = True) -> dict:
-        config = {"tree": self.tree, "sort": self.sort, "save_on": self.save_on,
+        config = {"tree": self.tree, "sort": self.sort, "regex": self.regex,
+                  "save_on": self.save_on,
                   "save_path": self.save_path, "no_cache": self.cache.no_cache,
                   "cache_ttl": self.cache.ttl_seconds,
                   "cache_min_load_ms": self.cache.min_load_ms,
