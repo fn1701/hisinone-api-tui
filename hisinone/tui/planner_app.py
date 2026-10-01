@@ -1,5 +1,5 @@
 """Studienplaner in der App: Zwischenseite mit Studiengang und Filtern,
-laden (mit Fortschritt im Dialog), dann die Tabelle im Vollbild.
+laden (mit Fortschritt im Dialog), die Tabelle erscheint darunter.
 
 Je Studiengang und Filter-Kombination ein eigener Cache-Eintrag; die
 Filterwerte selbst stehen im HTML der Seite und werden mit ihr gecacht.
@@ -18,12 +18,13 @@ from hisinone.noten import HISinOneError
 
 from .current_page import CurrentPage, LoadedTables
 from .loading_dialog import LoadingDialog
+from .page_config import PageConfig
 from .planner_choice import PlannerChoice
 from .planner_screen import PlannerScreen
 
 
 class PlannerLoading:
-    """Mixin fuer LoadingApp (nutzt session, client, store, _get, show_tree_tables)."""
+    """Mixin fuer LoadingApp (nutzt session, client, store, _get, save_expanded)."""
 
     planner_choices: dict[str, PlannerChoice]  # stabile URL -> zuletzt gewaehlt
 
@@ -102,5 +103,8 @@ class PlannerLoading:
         dialog.dismiss()
         if refreshed:
             self.planner_screen.set_page(refreshed, self.planner_choices[page.stable_url])
-        if tables:
-            self.show_tree_tables(LoadedTables(page, tables, html, ""))
+        if tables:  # in der Seite unter den Filtern, nicht im Vollbild
+            self.save_expanded(LoadedTables(page, tables, html, ""))
+            self.settings.pages.setdefault(page.stable_url, PageConfig())
+            prefs = self.settings.page_tables(page.stable_url, tables)
+            self.planner_screen.show_table(page, tables[0], prefs)

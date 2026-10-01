@@ -19,6 +19,11 @@ class Course:
     link_id: str
     label: str
 
+    @property
+    def name(self) -> str:
+        """Nur der Name (erster Textteil, ohne Zusatzzeilen) fuer Auswahllisten."""
+        return self.label.split(" · ")[0]
+
 
 def parse_courses(html: str) -> list[Course]:
     """Alle Studiengaenge der Seite in Seitenreihenfolge."""
