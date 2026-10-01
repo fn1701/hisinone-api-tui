@@ -12,6 +12,7 @@ class TreeTable:
     cols: list[str]  # Spaltenkoepfe der Seite
     rows: list[Row]
     custom: list[str] = field(default_factory=list)  # eigene, berechnete Spalten
+    start_folded: bool = False  # grosse Baeume: anfangs nur die oberste Ebene zeigen
 
     @property
     def title_col(self) -> str:

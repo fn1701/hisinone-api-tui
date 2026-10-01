@@ -27,7 +27,7 @@ def parse_planner_tree(html: str) -> list[TreeTable]:
     rows = [_parse_row(part) for part in ROW_START.split(html) if LEVEL.match(part)]
     if not rows:
         return []
-    return [TreeTable("Studienplaner", list(PLANNER_COLS), rows)]
+    return [TreeTable("Studienplaner", list(PLANNER_COLS), rows, start_folded=True)]
 
 
 def _parse_row(part: str) -> Row:
