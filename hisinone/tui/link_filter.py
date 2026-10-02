@@ -1,18 +1,31 @@
-"""Filterfeld des Link-Baums: Eingabe, Regex-Schalter, Fokuswechsel."""
+"""Filterfeld des Link-Baums: Eingabe, Regex-Schalter, Fokuswechsel.
 
-from textual import on
+Handler heißen nach Textuals Namensschema (on_input_changed, ...) statt
+@on(...): @on wirkt nur in Klassen mit Textuals Metaklasse, in diesem
+einfachen Mixin würde es stillschweigend ignoriert."""
+
 from textual.widgets import Checkbox, Input
 
 
 class LinkFilter:
     """Mixin für LinkTreeApp (nutzt page, rebuild, link_tree, settings)."""
 
-    @on(Input.Changed, "#filter")
+    def on_input_changed(self, event: Input.Changed) -> None:
+        if event.input.id == "filter":
+            self.filter_changed()
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        if event.input.id == "filter":
+            self.action_focus_tree()
+
+    def on_checkbox_changed(self, event: Checkbox.Changed) -> None:
+        if event.checkbox.id == "regex":
+            self.regex_changed()
+
     def filter_changed(self) -> None:
         if self.page.html:
             self.rebuild()
 
-    @on(Checkbox.Changed, "#regex")
     def regex_changed(self) -> None:
         """Kommt von jedem Bildschirm; die Checkbox der Link-Ansicht (unterster
         Bildschirm) zieht nach, damit alle Seiten denselben Stand zeigen."""
@@ -22,10 +35,6 @@ class LinkFilter:
                 box.value = self.settings.regex
         if self.screen is self.screen_stack[0]:  # Baum nur sichtbar neu aufbauen
             self.filter_changed()
-
-    @on(Input.Submitted, "#filter")
-    def filter_submitted(self) -> None:
-        self.action_focus_tree()
 
     def action_focus_filter(self) -> None:
         field = self.query_one("#filter", Input)
