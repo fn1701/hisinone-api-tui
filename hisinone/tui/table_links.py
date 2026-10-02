@@ -1,8 +1,11 @@
-"""Zeile oeffnen: g laedt die Seite der Zeile (z.B. Modulbeschreibung im
-Studienplaner) in der App, o oeffnet sie im Browser (wie im Link-Baum)."""
+"""Zeile öffnen: g lädt die Seite der Zeile (z.B. Modulbeschreibung im
+Studienplaner) in der App, o öffnet sie im Browser (wie im Link-Baum),
+p lädt die Seiten aller sichtbaren Zeilen in den Cache (TablePrefetch)."""
+
+from .table_prefetch import TablePrefetch
 
 
-class TableLinks:
+class TableLinks(TablePrefetch):
     """Mixin; erwartet current_row/row_url (TableViews) und app.open_from_table."""
 
     def action_open_row(self) -> None:
