@@ -43,8 +43,8 @@ class SingleTableScreen(TableViews, TableColumns, TableExport, TableLinks, Filte
         Binding("a", "toggle_sort", "A-Z"),
         Binding("n", "copy_name", "Name kopieren", show=False),
         Binding("space", "toggle_node", "Auf/Zu"),
-        Binding("plus", "fold_all(False)", "Alle auf"),
-        Binding("minus", "fold_all(True)", "Alle zu"),
+        Binding("plus", "fold_all(False)", "Alle auf", show=False),
+        Binding("minus", "fold_all(True)", "Alle zu", show=False),
     ]
     CSS = "SingleTableScreen DataTable { height: auto; }" + TABLES_CSS + SUGGEST_CSS + VIEWS_CSS
 
@@ -56,6 +56,8 @@ class SingleTableScreen(TableViews, TableColumns, TableExport, TableLinks, Filte
 
     def suggestions(self) -> list[str]:
         return filter_suggestions(self.table.rows, self.state.filter_cols())
+
+    BAR_CLICKABLE = False  # Titelleiste oeffnet das Vollbild (open_single)
 
     def column_name(self, index: int) -> str:
         return self.state.active_cols()[index]
@@ -76,8 +78,9 @@ class SingleTableScreen(TableViews, TableColumns, TableExport, TableLinks, Filte
         yield from self.compose_top()
         yield FilterBar(self.state.filter, "rowfilter", FILTER_HINT)
         yield OptionList(id="suggest")
+        # ueber allen Ansichten; im Studienplaner klickbar (Vollbild)
+        yield TableBar(0, "", self.BAR_CLICKABLE)
         with VerticalScroll(id="tablescroll"):
-            yield TableBar(0, "", False)
             yield ClickTable(zebra_stripes=True, cursor_type="row")
         with Horizontal(id="treeview"):
             yield RowTree("", id="rowtree")

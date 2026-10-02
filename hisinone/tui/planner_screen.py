@@ -26,6 +26,8 @@ class PlannerScreen(SingleTableScreen):
         Binding("f", "fullscreen", "Vollbild"),
     ]
 
+    BAR_CLICKABLE = True
+
     def __init__(self, page, choice: PlannerChoice):
         super().__init__(page.name, TreeTable("Studienplaner", ["Titel"], []), {})
         self.page, self.choice = page, choice
@@ -51,6 +53,10 @@ class PlannerScreen(SingleTableScreen):
     def action_fullscreen(self) -> None:
         """Dieselbe Tabelle ohne Studiengang/Filter; Einstellungen gemeinsam."""
         self.app.push_screen(SingleTableScreen(self.page_name, self.table, self.state.page_prefs))
+
+    def open_single(self, index: int) -> None:
+        """Klick auf die Titelleiste wie Taste f."""
+        self.action_fullscreen()
 
     def on_screen_resume(self) -> None:
         """Zurueck aus dem Vollbild: dort geaenderte Filter/Spalten uebernehmen."""
