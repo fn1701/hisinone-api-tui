@@ -10,6 +10,16 @@
 - Nicht pushen, solange nicht ausdrücklich gewünscht.
 - Niemals committen: `.env`, gespeicherte Seiten/Exporte (enthalten Noten).
 
+## Testen
+
+- Die App (TUI) nur als echte App in der tmux-Sitzung `hisinone` testen –
+  keine headless Textual-Tests (`run_test`/Pilot), die App-Klassen starten.
+  Offline-Prüfungen reiner Parser-Funktionen (`hisinone/explore`) an
+  gespeichertem HTML sind in Ordnung.
+- Die App in tmux nur nach Rückfrage beenden oder neu starten.
+- In Eingabefelder erst tippen, wenn der Fokus dort sicher ist – sonst
+  lösen die Buchstaben Tastenkürzel aus.
+
 ## Code-Stil (Clean Code, lesbar mit C++/OO-Hintergrund)
 
 Gilt für alle Python-Dateien. Durchgesetzt per pre-commit
