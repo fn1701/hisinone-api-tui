@@ -6,10 +6,11 @@ p lädt die Seiten aller sichtbaren Zeilen in den Cache (TablePrefetch)."""
 from textual.widgets import Tree
 
 from .row_tree import RowTree
+from .subtree_loading import SubtreeLoading
 from .table_prefetch import TablePrefetch
 
 
-class TableLinks(TablePrefetch):
+class TableLinks(SubtreeLoading, TablePrefetch):
     """Mixin; erwartet current_row/row_url (TableViews) und app.open_from_table."""
 
     def action_enter_row(self) -> None:
@@ -19,9 +20,10 @@ class TableLinks(TablePrefetch):
             self.action_toggle_node()
             return
         row = self.current_row()
-        target = (row.get("subtree_url") or row.get("url")) if row else ""
-        if target:
-            self.app.open_from_table(target, str(row.get(self.table.title_col, "")))
+        if row and row.get("subtree_url"):
+            self.load_subtree(row)
+        elif row and row.get("url"):
+            self.app.open_from_table(row["url"], str(row.get(self.table.title_col, "")))
 
     def _has_children(self) -> bool:
         if self.view != "table":

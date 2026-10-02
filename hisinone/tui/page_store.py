@@ -38,6 +38,17 @@ class PageStore:
         self.cache.put(CachedPage(page.stable_url, page.server_url, page.name, page.html,
                                   page.pulled_at, tables))  # fmt: skip
 
+    def update_table(self, stable_url: str, table: TreeTable) -> None:
+        """Geänderte Tabelle (z.B. eingefügter Unterbaum) im Cache der Seite
+        ersetzen; ist die Seite nicht gecacht, bleibt es dabei."""
+        cached = self.cache.get(stable_url) if self.cache else None
+        if not cached:
+            return
+        keys = [old.prefs_key for old in cached.tables]
+        if table.prefs_key in keys:
+            cached.tables[keys.index(table.prefs_key)] = table
+            self.cache.put(cached)
+
     def get_tables(self, key: str) -> tuple[float, list[TreeTable]] | None:
         """(Abrufzeitpunkt, Tabellen) einer Variante, z.B. Seite + Filter."""
         cached = self.cache.get(key) if self.cache else None

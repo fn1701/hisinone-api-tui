@@ -74,8 +74,10 @@ def _header_spans(segment: str) -> list[tuple[int, int, str]]:
 
 
 def _parse_row(depth: int, row_html: str, heads: list[tuple[int, int, str]]) -> Row:
-    row: Row = {"tiefe": depth, "typ": "", "url": _row_url(row_html),
-                "subtree_url": _subtree_url(row_html)}  # fmt: skip
+    permalink = _permalink(row_html)
+    row: Row = {"tiefe": depth, "typ": "", "url": _row_url(row_html) or permalink,
+                "permalink": permalink,
+                "subtree_url": permalink if COLLAPSED.search(row_html) else ""}  # fmt: skip
     position = 0
     for tag, inner in re.findall(r"(<td\b[^>]*>)(.*?)</td>", row_html, re.S):
         col = next((head for start, end, head in heads if start <= position < end), None)
@@ -90,21 +92,15 @@ def _parse_row(depth: int, row_html: str, heads: list[tuple[int, int, str]]) -> 
 
 
 def _row_url(row_html: str) -> str:
-    """Link der Zeile (relativ zur Seite) oder "" (nicht öffenbar)."""
+    """Erster echter Link der Zeile (relativ zur Seite) oder ""."""
     link = ROW_LINK.search(row_html)
-    if link:
-        return attribute(link.group(0), "href")
+    return attribute(link.group(0), "href") if link else ""
+
+
+def _permalink(row_html: str) -> str:
+    """Permalink der Zeile; zugeklappt zeigt er die Seite mit ihren Kindern."""
     permalink = PERMALINK.search(row_html)
     return attribute(permalink.group(0), "value") if permalink else ""
-
-
-def _subtree_url(row_html: str) -> str:
-    """Permalink eines zugeklappten Knotens: die Seite mit seinen Kindern
-    (ggf. keine - das zeigt erst der Server)."""
-    permalink = PERMALINK.search(row_html)
-    if not permalink or not COLLAPSED.search(row_html):
-        return ""
-    return attribute(permalink.group(0), "value")
 
 
 def _inherit_links(rows: list[Row]) -> None:

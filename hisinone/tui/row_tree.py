@@ -56,6 +56,16 @@ class RowTree(Tree):
         for node in self._nodes_without_children():
             node.allow_expand = False
 
+    def select_index(self, index: int) -> None:
+        """Cursor auf den Knoten der sichtbaren Zeile index."""
+        pending = [self.root]
+        while pending:
+            node = pending.pop()
+            if node.data == index:
+                self.move_cursor(node)
+                return
+            pending.extend(node.children)
+
     def _nodes_without_children(self) -> list[TreeNode]:
         pending, leaves = [self.root], []
         while pending:
