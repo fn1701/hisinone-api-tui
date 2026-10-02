@@ -20,6 +20,7 @@ class ExploreApp(NavigationApp):
         Binding("a", "toggle_sort", "Alphabetisch an/aus", show=False),
         Binding("exclamation_mark", "force_open", "Trotzdem oeffnen", show=False),
         Binding("c", "copy_url", "URL kopieren"),
+        Binding("n", "copy_name", "Name kopieren", show=False),
         Binding("v", "toggle_view", "Tabelle/Links", show=False),
         Binding("o", "browser", "Im Browser oeffnen", show=False),
         Binding("s", "toggle_save", "Speichern an/aus", show=False),

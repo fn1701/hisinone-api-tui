@@ -10,6 +10,7 @@ from textual.widgets.tree import TreeNode
 
 from hisinone.explore.table_model import Row
 
+from .copy_name import CopyName, copy_text
 from .page_config import TABLE_VIEWS
 from .row_tree import RowTree, row_details
 
@@ -73,6 +74,14 @@ class TableViews:
         details = row_details(row, self.state.active_cols(), self.table.title_col,
                               self.row_url(row) if row else "")  # fmt: skip
         self.query_one("#rowinfo", Static).update(details)
+        title = str(row.get(self.table.title_col, "")) if row else ""
+        self.query_one(CopyName).set_name(title)
+
+    def action_copy_name(self) -> None:
+        """Name der markierten Zeile (auch in der Tabellen-Ansicht)."""
+        row = self.current_row()
+        if row:
+            copy_text(self.app, str(row.get(self.table.title_col, "")))
 
     # Namens-Handler statt @on: Dekoratoren in einem Mixin registriert Textual nicht
     def on_tree_node_highlighted(self, event: Tree.NodeHighlighted) -> None:

@@ -1,8 +1,8 @@
 """Aktionen der Link-Ansicht: Verlauf, Ansicht umschalten, URL, Speichern."""
 
-from hisinone.explore.clipboard import copy_external
 from hisinone.explore.storage import prepare_save_dir, save_html
 
+from .copy_name import CopyName, copy_text
 from .loading_app import LoadingApp
 
 
@@ -54,12 +54,10 @@ class NavigationApp(LoadingApp):
         url = self.current_url()
         if not url:
             return
-        # Externes Tool (wl-copy/xclip) bevorzugt, sonst OSC 52 ueber das Terminal
-        tool = copy_external(url)
-        if not tool:
-            self.copy_to_clipboard(url)
-            tool = "OSC 52"
-        self.notify(f"Kopiert ({tool}): {url}")
+        copy_text(self, url)
+
+    def action_copy_name(self) -> None:
+        self.query_one(CopyName).copy()
 
     def action_browser(self) -> None:
         if url := self.current_url():

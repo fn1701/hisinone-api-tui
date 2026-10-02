@@ -8,10 +8,12 @@ from textual.app import App, ComposeResult
 from textual.containers import Horizontal, VerticalScroll
 from textual.widgets import Footer, Header, Input, Static, Tree
 
+from hisinone.explore.html_text import link_name
 from hisinone.explore.link_tree import flat_entries, tree_order
 from hisinone.explore.links import Link, extract_links, match_links
 from hisinone.explore.storage import prepare_save_dir, save_html
 
+from .copy_name import CopyName
 from .current_page import CurrentPage, LinkCounts, page_info
 from .filter_bar import FilterBar
 from .link_filter import LinkFilter
@@ -51,6 +53,7 @@ class LinkTreeApp(MessageLog, LinkFilter, App):
         with Horizontal():
             yield Tree("Anmelden ...", id="links")
             with VerticalScroll(id="details"):
+                yield CopyName(id="entryname")
                 yield Static(id="page")
                 yield Static(id="link")
         yield Footer()
@@ -96,6 +99,7 @@ class LinkTreeApp(MessageLog, LinkFilter, App):
         counts = LinkCounts(total, len(links), text, mode)
         self.query_one("#page", Static).update(page_info(self.page, counts, self.save_dir))
         self.query_one("#link", Static).update("")
+        self.query_one(CopyName).set_name(self.page.name)
 
     @on(Tree.NodeCollapsed, "#links")
     @on(Tree.NodeExpanded, "#links")
@@ -124,4 +128,7 @@ class LinkTreeApp(MessageLog, LinkFilter, App):
 
     @on(Tree.NodeHighlighted, "#links")
     def node_highlighted(self, event: Tree.NodeHighlighted) -> None:
-        self.query_one("#link", Static).update(link_details(event.node.data, self.host))
+        link: Link | None = event.node.data
+        self.query_one("#link", Static).update(link_details(link, self.host))
+        label = link_name(link.label) or link.label if link else str(event.node.label)
+        self.query_one(CopyName).set_name(label)

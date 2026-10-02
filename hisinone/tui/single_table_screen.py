@@ -13,6 +13,7 @@ from textual.widgets import Checkbox, DataTable, Footer, Header, Input, OptionLi
 from hisinone.explore.row_filter import filter_suggestions
 from hisinone.explore.table_model import TreeTable
 
+from .copy_name import CopyName
 from .filter_bar import FilterBar
 from .filter_screen import SUGGEST_CSS, FilterScreen
 from .page_config import TablePrefs
@@ -39,6 +40,7 @@ class SingleTableScreen(TableViews, TableColumns, TableExport, TableLinks, Filte
         Binding("e", "export", "Export"),
         Binding("g", "open_row", "Öffnen"),
         Binding("o", "browse_row", "Browser"),
+        Binding("n", "copy_name", "Name kopieren", show=False),
         Binding("space", "toggle_node", "Auf/Zu"),
         Binding("plus", "fold_all(False)", "Alle auf"),
         Binding("minus", "fold_all(True)", "Alle zu"),
@@ -79,6 +81,7 @@ class SingleTableScreen(TableViews, TableColumns, TableExport, TableLinks, Filte
         with Horizontal(id="treeview"):
             yield RowTree("", id="rowtree")
             with Vertical(id="side"):
+                yield CopyName(id="entryname")
                 yield Static(id="sidehelp")
                 yield Static(id="rowinfo")
         yield Footer()
