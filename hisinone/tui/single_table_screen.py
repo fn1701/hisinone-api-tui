@@ -40,6 +40,7 @@ class SingleTableScreen(TableViews, TableColumns, TableExport, TableLinks, Filte
         Binding("e", "export", "Export"),
         Binding("g", "open_row", "Öffnen"),
         Binding("o", "browse_row", "Browser"),
+        Binding("a", "toggle_sort", "A-Z"),
         Binding("n", "copy_name", "Name kopieren", show=False),
         Binding("space", "toggle_node", "Auf/Zu"),
         Binding("plus", "fold_all(False)", "Alle auf"),

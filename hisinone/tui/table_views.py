@@ -77,6 +77,11 @@ class TableViews:
         title = str(row.get(self.table.title_col, "")) if row else ""
         self.query_one(CopyName).set_name(title)
 
+    def action_toggle_sort(self) -> None:
+        """Geschwister alphabetisch bzw. wieder in Server-Reihenfolge."""
+        self.state.sort = not self.state.sort
+        self.refresh_table()
+
     def action_copy_name(self) -> None:
         """Name der markierten Zeile (auch in der Tabellen-Ansicht)."""
         row = self.current_row()

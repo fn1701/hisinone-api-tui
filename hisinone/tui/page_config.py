@@ -37,6 +37,7 @@ class TablePrefs:
     latest: bool = False  # nur letzter Versuch
     filter: str = ""  # Zeilenfilter
     folded: list[str] | None = None  # zugeklappte Knoten, None = Startzustand
+    sort: bool = False  # Geschwister A-Z (Taste a)
     view: str = ""  # TABLE_VIEWS (Taste t); "" = Standard aus den Einstellungen
 
     @classmethod
@@ -47,6 +48,7 @@ class TablePrefs:
             latest=_typed(data, "latest", bool, False),
             filter=_typed(data, "filter", str, ""),
             folded=_typed(data, "folded", list, None),
+            sort=_typed(data, "sort", bool, False),
             view=_table_view(data),
         )
 

@@ -4,6 +4,7 @@ from hisinone.explore.exams import latest_attempts_tree
 from hisinone.explore.table_model import Row, TreeTable
 from hisinone.explore.tree_filter import filter_tree
 from hisinone.explore.tree_fold import ShownRow, TreeFold
+from hisinone.explore.tree_sort import sort_tree
 
 from .page_config import TablePrefs
 
@@ -22,6 +23,7 @@ class TableViewState:
         self.custom_on = prefs.custom_on and bool(table.custom)
         self.latest = prefs.latest
         self.filter = prefs.filter
+        self.sort = prefs.sort
         self.view = prefs.view  # "" = Standard (der Bildschirm setzt ihn ein)
         # Spalten wachsen beim Auf-/Zuklappen nur (kein Springen); neuer Filter
         # oder Alle auf/zu: neu aus dem Gezeigten
@@ -69,6 +71,8 @@ class TableViewState:
             self.filter_fold = TreeFold(set())
             self._last_query = (self.filter, regex, view)
         rows = latest_attempts_tree(self.table.rows) if self.latest else self.table.rows
+        if self.sort:
+            rows = sort_tree(rows, self.table.title_col)
         self.matched = None
         if view == "flat":
             return self._flat(rows, regex)
@@ -117,7 +121,7 @@ class TableViewState:
         self.latest = self.latest and self.can_latest
         folded = sorted(self.fold.folded) if self.fold_changed else None
         prefs = TablePrefs(self.col_choice, self.custom_on, self.latest, self.filter, folded,
-                           self.view)  # fmt: skip
+                           self.sort, self.view)  # fmt: skip
         default = TablePrefs(self.table.cols + self.table.custom)
         if prefs == default:
             self.page_prefs.pop(self.table.prefs_key, None)
@@ -125,5 +129,9 @@ class TableViewState:
             self.page_prefs[self.table.prefs_key] = prefs
 
     def flags(self) -> list[str]:
-        named = (("eigene Spalten", self.custom_on), ("letzter Versuch", self.latest))
+        named = (
+            ("eigene Spalten", self.custom_on),
+            ("letzter Versuch", self.latest),
+            ("A-Z", self.sort),
+        )
         return [name for name, is_on in named if is_on]
