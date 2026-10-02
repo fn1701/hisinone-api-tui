@@ -1,466 +1,78 @@
-# HISinOne Noten API
+# HISinOne API & TUI
 
-Ruft den **Notenspiegel** einer [HISinOne](https://www.his.de/)/QIS-Installation ab
-und gibt ihn als sauberes **JSON** zurück – Stammdaten, Durchschnitt, Credits und
-alle Prüfungen mit sämtlichen Tabellenspalten.
+Inoffizielle Werkzeuge für das Campus-Management-System
+[HISinOne](https://www.his.de/) – im Terminal statt im Browser:
 
-**Nur mit der Hochschule Hannover getestet** (`campusmanagement.hs-hannover.de`).
-Da HISinOne/QIS an vielen Hochschulen im Einsatz ist, funktioniert es dort
-**vielleicht** ebenfalls (ggf. nach Anpassung der URLs in der `.env`) – das ist
-aber **nicht garantiert**.
+- **Explorer (TUI):** jede HISinOne-Seite als Link-Baum, Tabellen wie
+  Leistungen oder Studienplaner als aufklappbare, filterbare Tabellen,
+  Modulbeschreibungen als lesbarer Text – mit Cache, Export und Tastaturbedienung.
+- **Noten-API:** den Notenspiegel als JSON abrufen, als CLI oder
+  Python-Bibliothek.
+- **Skripte:** Leistungen als Tabelle/CSV/JSON, Link-Listen, Login-Test.
 
-> **Inoffiziell.** Dieses Projekt nutzt ausschließlich die normale Web-Oberfläche
-> mit **deinen eigenen** Zugangsdaten – es gibt keine öffentliche API der
-> Hochschule. Nutzung auf eigene Verantwortung, nur für den eigenen Account.
+> **Inoffiziell und nur lesend.** Das Projekt nutzt ausschließlich die normale
+> Web-Oberfläche mit **deinen eigenen** Zugangsdaten. Es belegt, meldet an oder
+> ändert nichts. Nutzung auf eigene Verantwortung, nur für den eigenen Account.
 
 ## Features
 
-- Vollständiger Login inkl. der SSO-Übergabe vom modernen HISinOne ins Legacy-QIS
-  (wo die Noten an der HS Hannover tatsächlich liegen).
-- Ausgabe als strukturiertes JSON – als **CLI** oder als **Python-Bibliothek**.
-- Zugangsdaten in einer `.env` (per `.gitignore` vom Repo ausgeschlossen).
-- Nur eine Abhängigkeit: `requests`. HTML-Parsing komplett mit der Standardbibliothek.
-- Robust gegen die zickige QIS-SSO durch automatische Wiederholversuche.
+- Login ins moderne HISinOne, auf Wunsch SSO-Übergabe ins Legacy-QIS
+- **Link-Baum** aus der Navigation (`navigationPosition`) und Permalinks;
+  stabile URLs ohne flüchtige Ablauf-Schlüssel
+- **Baum-Tabellen** generisch erkannt und aufgeklappt; Ansichten Tabelle,
+  Baum und Liste; Spaltenwahl, A–Z-Sortierung, Export als CSV/JSON
+- **Filter** mit Spalten-Syntax oder Regex über Zeile samt Eltern
+- **Studienplaner** mit Studiengang und Filtern, Detailseiten mit
+  Registerkarten, Inhaltsverzeichnis und Markdown-Export
+- **Cache** für langsame Seiten, zufällige Pausen zwischen Anfragen
+- Einstellungen je Seite und Tabelle in einer Config-Datei; frei belegbare
+  Shortcuts; Meldungs-Log in `/tmp`
+- Hochschul-unabhängig: Adressen nur in der `.env`
 
----
-
-## Projektstatus & Mitwirken
-
-> **Hinweis: Dieses Projekt ist KI-generiert.** Der Code wurde mit Hilfe eines
-> KI-Assistenten erstellt. Er funktioniert im getesteten Umfang, kann aber
-> **Fehler, unsaubere Stellen oder unbedachte Randfälle** enthalten. Wer damit
-> weiterarbeitet, sollte den Code vor produktivem Einsatz selbst prüfen.
-
-- **Getestet:** ausschließlich an der **Hochschule Hannover**. Andere
-  HISinOne-Hochschulen können funktionieren, sind aber nicht getestet und
-  **nicht garantiert**.
-- **Wartung:** Ich werde an diesem Projekt **nicht aktiv weiterarbeiten** – es
-  ist als „funktioniert bei mir"-Stand gedacht.
-- **Forks willkommen!** Wer es für die eigene Hochschule anpassen oder
-  erweitern möchte, darf das Projekt gerne **forken** und frei weiterentwickeln
-  (die MIT-Lizenz erlaubt das ausdrücklich). Pull Requests werden vermutlich
-  nicht zeitnah bearbeitet – ein eigener Fork ist daher der sicherste Weg.
-
----
-
-## Sporadische Fehler & wie man sie abfängt
-
-Das QIS-Portal liefert **gelegentlich eine leere bzw. Gast-Seite** zurück,
-obwohl der Login korrekt war. Das Skript versucht es intern bereits mehrmals mit
-wachsendem Abstand; klappt es trotzdem nicht, bricht es mit einem
-`HISinOneError` ab (Meldung: *„… Bitte in ein paar Sekunden erneut starten."*).
-
-Das ist **kein Fehler im Skript**, sondern ein sporadisches Verhalten des
-Servers – aggressives Nachfassen hilft nicht, ein neuer Anlauf kurz später
-dagegen fast immer.
-
-**Auf der CLI:** einfach den Befehl noch einmal ausführen.
-
-**Im eigenen Skript** fängst du es ab, indem du bei einem `HISinOneError` kurz
-wartest und erneut abrufst – bei falschen Zugangsdaten (`HISinOneAuthError`)
-dagegen sofort abbrichst, weil ein Retry da zwecklos ist:
-
-```python
-import time
-from hisinone_noten import HISinOneClient, HISinOneError, HISinOneAuthError
-
-
-def noten_mit_wiederholung(versuche=5, pause=10):
-    client = HISinOneClient.from_env()
-    for i in range(1, versuche + 1):
-        try:
-            return client.get_grades()
-        except HISinOneAuthError:
-            raise  # falsches Passwort -> nicht wiederholen
-        except HISinOneError as e:
-            if i == versuche:
-                raise  # nach dem letzten Versuch aufgeben
-            print(f"Versuch {i} fehlgeschlagen ({e}). Warte {pause}s ...")
-            time.sleep(pause)
-
-
-daten = noten_mit_wiederholung()
-print(daten["zusammenfassung"])
-```
-
-So läuft dein Programm auch dann durch, wenn das Portal beim ersten Anlauf zickt.
-Genau dieses Muster steckt auch im mitgelieferten
-[`examples/beispiel.py`](examples/beispiel.py).
-
----
-
-## Voraussetzungen
-
-- **Python 3.8** oder neuer
-- **pip** (für die eine Abhängigkeit `requests`)
-- Ein gültiger Hochschul-Account (Benutzerkennung + Passwort)
-
-Python-Version prüfen:
+## Schnellstart
 
 ```bash
-python --version
-```
-
----
-
-## Einrichtung (Schritt für Schritt)
-
-**1. Projekt holen**
-
-```bash
-git clone https://github.com/Dirtez03/hisinone-noten-api.git
-cd hisinone-noten-api
-```
-
-(Oder einfach den Ordner `hisinone/noten` in dein Projekt kopieren und `from hisinone.noten import HISinOneClient` nutzen.)
-
-**2. Abhängigkeit installieren**
-
-```bash
+git clone https://github.com/fn1701/hisinone-api-tui.git
+cd hisinone-api-tui
+python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env    # Zugangsdaten und Adresse deiner Hochschule eintragen
+python explore_tui.py
 ```
 
-**3. Zugangsdaten hinterlegen**
+Python 3.11 oder neuer. Details: [Installation](docs/installation.md).
 
-Kopiere die Vorlage und trage deine Daten ein:
+## Dokumentation
 
-```bash
-cp .env.example .env      # Windows: copy .env.example .env
-```
-
-Dann `.env` öffnen und ausfüllen:
-
-```ini
-HISINONE_USERNAME=deine-benutzerkennung
-HISINONE_PASSWORD=dein-passwort
-```
-
-Die `.env` steht in `.gitignore` und wird **nie** mit hochgeladen.
-
-**4. Testen**
-
-```bash
-python hisinone_noten.py
-```
-
-Wenn alles passt, erscheint dein Notenspiegel als JSON.
-
-### Andere Hochschule / anderer Studiengang?
-
-Die Standardwerte in der `.env` gelten für die HS Hannover. Zwei Dinge lassen
-sich anpassen:
-
-- **`HISINONE_BASE_URL` / `HISINONE_ICMS_URL`** – die HISinOne- bzw. QIS-Adresse
-  deiner Hochschule.
-- **`HISINONE_NODE_ID`** – der Knoten deines Studiengangs im Notenspiegel-Baum.
-  Den findest du, indem du den Notenspiegel im Browser öffnest und in der URL
-  den Parameter `nodeID=...` kopierst (URL-kodiert übernehmen). Standard ist
-  `abschl=84` (Bachelor), `stgnr=1`.
-
----
-
-## Benutzung als CLI
-
-```bash
-python hisinone_noten.py                 # JSON nach stdout
-python hisinone_noten.py -o noten.json   # in Datei schreiben
-python hisinone_noten.py --compact       # einzeiliges JSON
-python hisinone_noten.py --env pfad/zu/.env   # andere .env verwenden
-```
-
-Beispiel: nur den Durchschnitt herausziehen (mit [`jq`](https://jqlang.github.io/jq/)):
-
-```bash
-python hisinone_noten.py | jq '.zusammenfassung'
-```
-
-### Filter im Explorer (`explore_tui.py`)
-
-Link-Baum und Tabellen (z. B. Studienplaner) haben ein Filterfeld. Es kennt
-zwei Arten:
-
-- **Normal:** Begriffe mit Leerzeichen getrennt, jeder muss vorkommen;
-  `"Spalte"=Wert` sucht nur in einer Spalte. Die Vorschläge (↓) bieten die
-  Spalten an.
-- **Regex** (Häkchen „Regex“ oder `Strg+R`, gilt für alle Seiten): Python-`re`.
-  Groß-/Kleinschreibung ist egal, und der Ausdruck kann irgendwo im Text
-  passen. Bei eingeschalteter Regex zeigen die Vorschläge (↓) Beispiele.
-
-In Tabellen sieht die Regex jede Zeile **samt ihren Eltern** als einen Text.
-Die Eltern stehen zuerst, leere Spalten fehlen:
-
-```text
-Titel=Modul X | A=Bestanden | Titel=Prüfung Y | 1=PL | A=Bestanden
-```
-
-Passt eine Zeile, gilt das auch für alles darunter: Ein Treffer im Modul zeigt
-seine Prüfungen, und ein Ausschluss blendet den ganzen Teilbaum aus.
-Mitgezeigt werden die Eltern der Treffer. Badge-Spalten heißen `A`, `B`, `C`
-usw., Info-Spalten `1`, `2` usw.
-
-| Ausdruck | Bedeutung |
+| Thema | Inhalt |
 | --- | --- |
-| `Bestanden` | enthält „Bestanden“ |
-| `^(?!.*Bestanden)` | enthält **nicht** „Bestanden“ |
-| `^(?=.*\bPL\b)(?!.*Bestanden)` | enthält „PL“ (als Wort), aber nicht „Bestanden“ |
-| `\bA=Bestanden` | Spalte `A` ist „Bestanden“ |
-| `Titel=[^\|]*PV(?!.*\bA=Bestanden)` | „PV“ in der Spalte Titel und Spalte A nicht „Bestanden“ |
-| `Mathe\|Programm` | enthält eins von beiden |
-| `^Titel=Mathe` | oberster Elternknoten beginnt mit „Mathe“ |
+| [Installation](docs/installation.md) | Voraussetzungen, `.env`, Entwickler-Setup |
+| [Explorer](docs/explorer.md) | Oberfläche, Tasten, Tabellen |
+| [Filter](docs/filter.md) | Filter-Syntax und Regex-Beispiele |
+| [Studienplaner](docs/studienplaner.md) | Planer, Detailseiten, Registerkarten |
+| [Konfiguration](docs/konfiguration.md) | Config-Datei, Cache, Dateien in `/tmp` |
+| [Noten-API](docs/noten-api.md) | Notenspiegel als JSON, Bibliothek, Fehlerbehandlung |
+| [Skripte](docs/skripte.md) | `explore.py`, `leistungen.py` und weitere CLIs |
 
-Alle Meldungen der App (auch Ladefehler) stehen mit Uhrzeit in
-`/tmp/hisinone-log/explore.log`; Fehler bleiben 20 s sichtbar.
+## Projektstatus
 
-In der Vollbild-Tabelle wechselt `t` zwischen aufklappbarer Tabelle, Baum und
-flacher Liste; die Wahl wird je Tabelle in der Config gespeichert (Standard:
-Tabelle, mit `--flat` Liste). Baum und Liste zeigen die übrigen Spalten der
-markierten Zeile unten in der Seitenleiste. Der Filter wirkt in allen Ansichten
-gleich. Zeilen mit eigener Seite sind mit ◆ markiert: `g` öffnet die Seite in
-der App, `o` im Browser.
+- Hervorgegangen aus [Dirtez03/hisinone-noten-api](https://github.com/Dirtez03/hisinone-noten-api)
+  (Noten-API, getestet an der Hochschule Hannover); Explorer, Skripte und
+  Pakete sind in diesem Fork entstanden.
+- HISinOne wird an jeder Hochschule anders konfiguriert. Getestet ist der
+  Stand an einzelnen Installationen; andere können funktionieren, sind aber
+  **nicht garantiert**.
+- Der Code wurde mit Hilfe eines KI-Assistenten erstellt. Vor produktivem
+  Einsatz selbst prüfen.
 
-Im Link-Baum ist der Text „Beschriftung URL“; Beispiel:
-`_flowId=.*exam`, also Links, deren URL einen Flow mit „exam“ im Namen startet.
+## Sicherheit und Datenschutz
 
----
-
-## In eigene Skripte einbauen
-
-Das Herzstück ist die Klasse `HISinOneClient`. `get_grades()` liefert ein ganz
-normales Python-`dict` (dieselbe Struktur wie das JSON), das du frei
-weiterverarbeiten kannst.
-
-### 1. Schnellstart (Zugangsdaten aus `.env`)
-
-```python
-from hisinone_noten import HISinOneClient
-
-daten = HISinOneClient.from_env().get_grades()
-
-print(daten["student"]["name"])
-print("Durchschnitt:", daten["zusammenfassung"]["durchschnitt"])
-
-for p in daten["pruefungen"]:
-    print(f"{p['text']:35} {p['note'] or '-':>4}  {p['status']}")
-```
-
-### 2. Zugangsdaten direkt übergeben (ohne `.env`)
-
-Praktisch, wenn die Daten woanders herkommen (z. B. aus deiner eigenen Config
-oder Umgebungsvariablen):
-
-```python
-from hisinone_noten import HISinOneClient
-
-client = HISinOneClient(username="deine-kennung", password="dein-passwort")
-daten = client.get_grades()
-```
-
-### 3. Fehler sauber behandeln
-
-Alle erwartbaren Fehler (falsches Passwort, Server nicht erreichbar, Login-Kette
-gescheitert) kommen als `HISinOneError`:
-
-```python
-from hisinone_noten import HISinOneClient, HISinOneError
-
-try:
-    daten = HISinOneClient.from_env().get_grades()
-except HISinOneError as e:
-    print("Abruf fehlgeschlagen:", e)
-    # z. B. Benachrichtigung schicken, Retry planen, ...
-    raise SystemExit(1)
-```
-
-Möchtest du **falsche Zugangsdaten** gesondert behandeln, gibt es dafür die
-Unterklasse `HISinOneAuthError` (bricht sofort ab, wird nicht wiederholt):
-
-```python
-from hisinone_noten import HISinOneClient, HISinOneError, HISinOneAuthError
-
-try:
-    daten = HISinOneClient.from_env().get_grades()
-except HISinOneAuthError:
-    print("Benutzername oder Passwort stimmt nicht.")
-except HISinOneError as e:
-    print("Vorübergehendes Problem:", e)
-```
-
-### 4. Nur die bestandenen Prüfungen / eigene Auswertung
-
-```python
-daten = HISinOneClient.from_env().get_grades()
-
-# nur echte Prüfungsleistungen (Art == "PL"), bestanden mit Note
-bestanden = [
-    p for p in daten["pruefungen"] if p["art"] == "PL" and p["status"] == "BE" and p["note"]
-]
-
-
-# Notendurchschnitt selbst über gewichtete Credits rechnen
-def note(p):
-    return float(p["note"].replace(",", "."))
-
-
-def cp(p):
-    return float((p["credits"] or "0").replace(",", "."))
-
-
-gewichtet = sum(note(p) * cp(p) for p in bestanden)
-summe_cp = sum(cp(p) for p in bestanden)
-print("Eigener Schnitt:", round(gewichtet / summe_cp, 2) if summe_cp else "-")
-```
-
-### 5. Als JSON-String / in eine Datei / an eine Web-App
-
-```python
-import json
-from hisinone_noten import HISinOneClient
-
-daten = HISinOneClient.from_env().get_grades()
-
-# JSON-String (z. B. als HTTP-Antwort in Flask/FastAPI zurückgeben)
-text = json.dumps(daten, ensure_ascii=False, indent=2)
-
-# in eine Datei
-with open("noten.json", "w", encoding="utf-8") as f:
-    f.write(text)
-```
-
-Ein komplettes, lauffähiges Beispiel liegt in
-[`examples/beispiel.py`](examples/beispiel.py).
-
-> **Tipp zur Performance:** Jeder `get_grades()`-Aufruf macht den kompletten
-> Login neu. Wenn du die Daten mehrfach brauchst, ruf **einmal** ab und
-> verarbeite das zurückgegebene `dict` weiter – nicht in einer Schleife pollen.
-
----
-
-## JSON-Struktur (Beispiel, Werte anonymisiert)
-
-```json
-{
-  "abgerufen_am": "2026-07-05T15:58:49+0200",
-  "student": {
-    "name": "Max Mustermann",
-    "angestrebter_abschluss": "[84] Bachelor",
-    "matrikelnummer": "1234567"
-  },
-  "studiengang": "[622] Elektrotechnik und Informationstechnik",
-  "zusammenfassung": {
-    "durchschnitt": "2,1",
-    "credits": "15"
-  },
-  "pruefungen": [
-    {
-      "pruefungsnummer": "140701",
-      "text": "Gleichstromtechnik",
-      "art": "PL",
-      "note": "3,0",
-      "status": "BE",
-      "vermerk": "",
-      "credits": "5",
-      "versuch": "1",
-      "semester": "WiSe 25/26",
-      "pruefungsdatum": "",
-      "abgabe": ""
-    }
-  ],
-  "konten": [
-    {"nummer": "1000", "text": "1. Studienabschnitt", "durchschnitt": "2,1", "credits": "15", "semester": "Sommersemester 26"}
-  ],
-  "legende": {
-    "BE": "bestanden",
-    "NB": "nicht bestanden",
-    "AN": "angemeldet",
-    "GE": "Modul",
-    "PL": "Teilmodul"
-  }
-}
-```
-
-| Feld | Bedeutung |
-|------|-----------|
-| `student` | Name, angestrebter Abschluss, Matrikelnummer |
-| `studiengang` | Studiengang inkl. interner Nummer |
-| `zusammenfassung` | Notendurchschnitt und bislang erreichte Credits |
-| `pruefungen` | jede Zeile der Notentabelle mit **allen** Spalten (Prüfungsnummer, Text, Art, Note, Status, Vermerk, Credits, Versuch, Semester, Prüfungsdatum, Abgabe) |
-| `konten` | Summen-/Konto-Zeilen (z. B. „1. Studienabschnitt") |
-| `legende` | Erklärung aller Status- und Art-Kürzel |
-
-**Hinweis:** Alle Werte sind **Strings genau wie auf der Seite** – Noten und
-Credits im deutschen Format (`"2,1"`). Für Rechnungen `,` → `.` ersetzen und in
-`float` wandeln (siehe Beispiel 4). Eine Prüfung kann mehrfach vorkommen
-(z. B. `AN` = angemeldet und später der Versuch mit Note).
-
----
-
-## Abkürzungen (Statuscodes & Modultypen)
-
-Quelle: die „Erläuterungen" im HISinOne/QIS-Notenspiegel. Genau diese Kürzel
-stehen in den Feldern `status` und `art` – und werden zusätzlich unter
-`legende` direkt im JSON mitgeliefert.
-
-**Prüfungsstatus (Feld `status`)**
-
-| Code | Bedeutung |
-|------|-----------|
-| `AN` | angemeldet |
-| `BE` | bestanden |
-| `NB` | nicht bestanden |
-| `EN` | endgültig nicht bestanden |
-| `AB` | abgemeldet |
-| `KR` | Krankmeldung |
-| `GR` | genehmigter Rücktritt |
-| `NGR` | nicht genehmigter Rücktritt |
-| `NE` | nicht erschienen |
-| `RT` | abgemeldet über Online-Selbstbedienung |
-| `ME` | mündl. Ergänzungsprüfung |
-| `VZ` | Verzicht auf Wiederholung |
-| `TA` | Täuschungsversuch |
-| `PV` | Konto/Modul nicht vollständig |
-| `FAE` | fristgerechte Arbeitsabgabe erfolgt |
-
-**Modultyp (Feld `art`)**
-
-| Code | Bedeutung |
-|------|-----------|
-| `GE` | Modul |
-| `PL` | Teilmodul |
-| `MB` | Modul Bachelorarbeit |
-| `MM` | Modul Masterarbeit |
-| `AA` | Abschlussarbeit (Bachelor od. Master) |
-
-**Semester**
-
-| Code | Bedeutung |
-|------|-----------|
-| `SoSe` | Sommersemester |
-| `WiSe` | Wintersemester |
-
----
-
-## Wie es funktioniert
-
-Moderne HISinOne-Installationen zeigen die Noten teils nicht mehr im neuen
-Frontend, sondern nur im Legacy-QIS. Der Ablauf:
-
-1. **Login** im modernen HISinOne (`asdf`/`fdsa` + `ajax-token`).
-2. **SSO-Brücke** `rds?state=redirect&sso=qis` liefert einen Einmal-Token.
-3. Token **sauber** im Legacy-QIS einlösen (ohne den `re=`-Anhang, der sonst per
-   doppeltem `type=8` den Token-Login aushebelt).
-4. Über das POS-Menü die `asi`-Session-Id einsammeln.
-5. Notenspiegel-Baum initialisieren und die Liste abrufen (Latin-1).
-
-Details stehen im Docstring von [`hisinone_noten.py`](hisinone_noten.py).
-
----
-
-## Sicherheit
-
-- Die echte `.env` mit deinen Zugangsdaten wird durch `.gitignore` vom Repository
-  ausgeschlossen. **Committe sie niemals.**
-- Mit Benutzername + Passwort hängt dein kompletter Hochschul-Account dran – geh
-  entsprechend sorgsam damit um.
+- Die `.env` mit deinen Zugangsdaten ist per `.gitignore` ausgeschlossen –
+  **niemals committen.**
+- Gespeicherte Seiten, Exporte, Cache und Config enthalten persönliche Daten
+  (Noten, Modulnamen); sie liegen nur für deinen Benutzer lesbar in `/tmp`
+  bzw. `~/.config`. Ein pre-commit-Hook verhindert, dass sie ins Repository
+  gelangen.
 
 ## Lizenz
 
