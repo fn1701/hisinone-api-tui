@@ -16,10 +16,11 @@ from .current_page import CurrentPage, LinkCounts, page_info
 from .filter_bar import FilterBar
 from .link_filter import LinkFilter
 from .link_view import LinkTreeFiller, link_details
+from .message_log import MessageLog
 from .settings import Settings
 
 
-class LinkTreeApp(LinkFilter, App):
+class LinkTreeApp(MessageLog, LinkFilter, App):
     CSS = """
     FilterBar { dock: top; }
     #links { width: 2fr; }

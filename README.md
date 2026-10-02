@@ -208,6 +208,9 @@ usw., Info-Spalten `1`, `2` usw.
 | `Mathe\|Programm` | enthält eins von beiden |
 | `^Titel=Mathe` | oberster Elternknoten beginnt mit „Mathe“ |
 
+Alle Meldungen der App (auch Ladefehler) stehen mit Uhrzeit in
+`/tmp/hisinone-log/explore.log`; Fehler bleiben 20 s sichtbar.
+
 In der Vollbild-Tabelle wechselt `t` zwischen aufklappbarer Tabelle, Baum und
 flacher Liste; die Wahl wird je Tabelle in der Config gespeichert (Standard:
 Tabelle, mit `--flat` Liste). Baum und Liste zeigen die übrigen Spalten der
