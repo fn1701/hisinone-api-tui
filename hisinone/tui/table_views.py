@@ -8,6 +8,7 @@ from urllib.parse import urljoin
 from textual.widgets import DataTable, Static, Tree
 from textual.widgets.tree import TreeNode
 
+from hisinone.explore.custom_columns import is_nav_table
 from hisinone.explore.table_model import Row
 
 from .copy_name import CopyName, copy_text
@@ -29,8 +30,13 @@ class TableViews:
 
     @property
     def view(self) -> str:
-        """Gewählte Ansicht, sonst Standard aus den Einstellungen (--flat)."""
-        return self.state.view or ("table" if self.app.settings.tree else "flat")
+        """Gewählte Ansicht, sonst Standard: reine Navigations-Tabellen (nur Titel
+        neben Ebene/Aktionen) als Baum, sonst nach Einstellung (--flat)."""
+        if self.state.view:
+            return self.state.view
+        if not self.app.settings.tree:
+            return "flat"
+        return "tree" if is_nav_table(self.table) else "table"
 
     def action_toggle_view(self) -> None:
         self.state.view = TABLE_VIEWS[(TABLE_VIEWS.index(self.view) + 1) % len(TABLE_VIEWS)]

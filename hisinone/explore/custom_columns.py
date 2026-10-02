@@ -40,8 +40,14 @@ def is_data_table(table: TreeTable) -> bool:
     haben unbeschriftete Spalten, die erst aufgeklappt Werte bekommen)."""
     if any(row.get("url") for row in table.rows):
         return True
+    return not is_nav_table(table)
+
+
+def is_nav_table(table: TreeTable) -> bool:
+    """True, wenn außer Ebene/Aktionen nur eine Spalte (der Titel) Werte hat -
+    so eine Tabelle liest sich als Baum besser als in Spalten."""
     filled = [col for col in table.cols if col not in NAV_COLS and _has_values(table, col)]
-    return len(filled) > 1
+    return len(filled) <= 1
 
 
 def _has_values(table: TreeTable, col: str) -> bool:
