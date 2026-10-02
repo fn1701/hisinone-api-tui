@@ -14,6 +14,13 @@ from .table_model import Row, TreeTable
 TREE_TABLE = re.compile(r'<table\b[^>]*class="[^"]*\btreeTableWithIcons\b[^"]*"[^>]*>')
 ROW = re.compile(r'<tr\b[^>]*class="treeTableCellLevel(\d+)[^"]*"[^>]*>(.*?)</tr>', re.S)
 HEADING = re.compile(r"<(h[1-6]|legend|caption)\b[^>]*>(.*?)</\1>", re.S)
+# Ziel einer Zeile: erster echter Link (z.B. Detailseite), sonst der Permalink
+# ("#"/javascript: sind Skript-Knöpfe, die ohne Browser nichts öffnen)
+ROW_LINK = re.compile(r'<a\b[^>]*\bhref="(?!#|javascript:)[^"]+"[^>]*>')
+PERMALINK = re.compile(r'<input\b[^>]*\bid="autologinRequestUrl"[^>]*>')
+# Knoten, dessen Kinder der Server noch nicht mitgeschickt hat: zugeklappt und
+# mit Aufklapp-Knopf (Endknoten haben dort nur ein Symbol)
+COLLAPSED = re.compile(r'class="[^"]*\bnodeCollapsed\b[^"]*"[^>]*>\s*<button\b')
 
 
 def _colspan(tag: str) -> int:
@@ -50,6 +57,7 @@ def _parse_table(segment: str, name: str) -> TreeTable:
         base = min(row["tiefe"] for row in rows)
         for row in rows:
             row["tiefe"] -= base
+    _inherit_links(rows)
     return TreeTable(name, [head for _, _, head in heads], rows)
 
 
@@ -66,7 +74,8 @@ def _header_spans(segment: str) -> list[tuple[int, int, str]]:
 
 
 def _parse_row(depth: int, row_html: str, heads: list[tuple[int, int, str]]) -> Row:
-    row: Row = {"tiefe": depth, "typ": ""}
+    row: Row = {"tiefe": depth, "typ": "", "url": _row_url(row_html),
+                "subtree_url": _subtree_url(row_html)}  # fmt: skip
     position = 0
     for tag, inner in re.findall(r"(<td\b[^>]*>)(.*?)</td>", row_html, re.S):
         col = next((head for start, end, head in heads if start <= position < end), None)
@@ -78,3 +87,33 @@ def _parse_row(depth: int, row_html: str, heads: list[tuple[int, int, str]]) -> 
         if col and text:
             row[col] = f"{row[col]} {text}" if row.get(col) else text
     return row
+
+
+def _row_url(row_html: str) -> str:
+    """Link der Zeile (relativ zur Seite) oder "" (nicht öffenbar)."""
+    link = ROW_LINK.search(row_html)
+    if link:
+        return attribute(link.group(0), "href")
+    permalink = PERMALINK.search(row_html)
+    return attribute(permalink.group(0), "value") if permalink else ""
+
+
+def _subtree_url(row_html: str) -> str:
+    """Permalink eines zugeklappten Knotens: die Seite mit seinen Kindern
+    (ggf. keine - das zeigt erst der Server)."""
+    permalink = PERMALINK.search(row_html)
+    if not permalink or not COLLAPSED.search(row_html):
+        return ""
+    return attribute(permalink.group(0), "value")
+
+
+def _inherit_links(rows: list[Row]) -> None:
+    """Zeilen ohne eigene Seite (z.B. Parallelgruppen) bekommen die Seite des
+    nächsten Vorfahren mit Link - dort stehen ihre Angaben."""
+    path: list[Row] = []  # Vorfahren der aktuellen Zeile
+    for row in rows:
+        while path and path[-1]["tiefe"] >= row["tiefe"]:
+            path.pop()
+        if not row["url"] and path:
+            row["url"] = path[-1]["url"]
+        path.append(row)

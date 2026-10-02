@@ -7,18 +7,17 @@ from .custom_columns import is_data_table
 from .expand import can_expand_all, expand_tree_tables
 from .planner import PlannerLoader, Progress, is_study_planner, no_progress
 from .table_model import TreeTable
-from .tree_tables import TREE_TABLE, parse_tree_tables
+from .tree_tables import TREE_TABLE
 
 
 def has_tables(html: str) -> bool:
     return bool(TREE_TABLE.search(html)) or is_study_planner(html)
 
 
-def has_data_tables(html: str) -> bool:
-    """False für reine Navigations-Bäume (die bleiben Links)."""
-    if is_study_planner(html):
-        return True
-    return any(is_data_table(table) for table in parse_tree_tables(html))
+def has_data_tables(html: str, tables: list[TreeTable]) -> bool:
+    """False für reine Navigations-Bäume (die bleiben Links); tables = die
+    (ggf. aufgeklappten) Tabellen der Seite."""
+    return is_study_planner(html) or any(is_data_table(table) for table in tables)
 
 
 def can_expand(html: str) -> bool:

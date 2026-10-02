@@ -1,12 +1,39 @@
-"""Zeile öffnen: g lädt die Seite der Zeile (z.B. Modulbeschreibung im
+"""Zeile öffnen: Enter klappt auf/zu bzw. lädt den Unterbaum (ohne Unterbaum
+die Seite der Zeile), g lädt die Seite der Zeile (z.B. Modulbeschreibung im
 Studienplaner) in der App, o öffnet sie im Browser (wie im Link-Baum),
 p lädt die Seiten aller sichtbaren Zeilen in den Cache (TablePrefetch)."""
 
+from textual.widgets import Tree
+
+from .row_tree import RowTree
 from .table_prefetch import TablePrefetch
 
 
 class TableLinks(TablePrefetch):
     """Mixin; erwartet current_row/row_url (TableViews) und app.open_from_table."""
+
+    def action_enter_row(self) -> None:
+        """Sichtbare Kinder: auf-/zuklappen; sonst den zugeklappten Unterbaum
+        vom Server laden; ohne Unterbaum die Seite der Zeile (wie g)."""
+        if self._has_children():
+            self.action_toggle_node()
+            return
+        row = self.current_row()
+        target = (row.get("subtree_url") or row.get("url")) if row else ""
+        if target:
+            self.app.open_from_table(target, str(row.get(self.table.title_col, "")))
+
+    def _has_children(self) -> bool:
+        if self.view != "table":
+            node = self.query_one(RowTree).cursor_node
+            return node is not None and node.allow_expand
+        index = self.current_index()
+        return 0 <= index < len(self.shown) and bool(self.shown[index].mark.strip())
+
+    # Namens-Handler statt @on: Dekoratoren in einem Mixin registriert Textual nicht
+    def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
+        if isinstance(event.control, RowTree):
+            self.action_enter_row()
 
     def action_open_row(self) -> None:
         row = self._linked_row()

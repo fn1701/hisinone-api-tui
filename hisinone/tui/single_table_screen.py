@@ -145,5 +145,5 @@ class SingleTableScreen(TableViews, TableColumns, TableExport, TableLinks, Filte
         self.filter_input.focus()
 
     @on(DataTable.RowSelected)
-    def row_clicked(self, event: DataTable.RowSelected) -> None:  # Klick/Enter = Leertaste
-        self.action_toggle_node(event.cursor_row)
+    def row_clicked(self, event: DataTable.RowSelected) -> None:  # Klick/Enter
+        self.action_enter_row()

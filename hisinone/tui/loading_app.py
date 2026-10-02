@@ -9,21 +9,21 @@ from textual import work
 
 from hisinone.explore.html_text import link_name, page_title
 from hisinone.explore.links import clean_url
-from hisinone.explore.page_tables import can_expand, has_data_tables, has_tables, load_tables
+from hisinone.explore.page_tables import has_tables, load_tables
 from hisinone.explore.session import get_page, is_html, login
 from hisinone.explore.table_model import TreeTable
 from hisinone.explore.tree_tables import parse_tree_tables
 from hisinone.noten import HISinOneClient, HISinOneError
 
 from .current_page import CurrentPage, LoadedTables
+from .first_visit import FirstVisit
 from .link_app import LinkTreeApp
-from .page_config import PageConfig
 from .page_store import PageStore
 from .special_pages import SpecialPages
 from .table_display import TableDisplay
 
 
-class LoadingApp(SpecialPages, TableDisplay, LinkTreeApp):
+class LoadingApp(FirstVisit, SpecialPages, TableDisplay, LinkTreeApp):
     def __init__(self, settings):
         super().__init__(settings)
         self.session: requests.Session | None = None
@@ -75,14 +75,18 @@ class LoadingApp(SpecialPages, TableDisplay, LinkTreeApp):
         """Tabellen der neu geladenen Seite zeigen (je nach Config)."""
         if self.call_from_thread(self.show_special, page):
             return []
-        config = self._page_config(page) if has_tables(page.html) else None
-        tables = []
-        if config and config.view == "table":
-            tables = self._load_tables(page, open_col or config.open_table, config.expand)
-        elif open_col:
-            self.call_from_thread(self.notify, "Keine Tabelle auf der Seite (abgemeldet?).",
-                                  severity="warning")  # fmt: skip
-        return tables
+        if not has_tables(page.html):
+            if open_col:
+                self.call_from_thread(self.notify, "Keine Tabelle auf der Seite (abgemeldet?).",
+                                      severity="warning")  # fmt: skip
+            return []
+        config = self.settings.pages.get(page.stable_url)
+        if config is None or config.view is None:
+            return self._first_visit(page, open_col)
+        if config.view != "table":
+            return []
+        tables, html = self._expanded(page, config.expand)
+        return self._show_tables(page, tables, html, open_col or config.open_table)
 
     def _show_cached(self, stable_url: str, push: bool, open_col: str) -> bool:
         """Seite (und ggf. Tabellen) aus dem Cache zeigen; False = nicht da."""
@@ -91,6 +95,8 @@ class LoadingApp(SpecialPages, TableDisplay, LinkTreeApp):
         if not cached:
             return False
         page, tables = cached
+        if has_tables(page.html) and (config is None or config.view is None):
+            return False  # Ansicht noch unbekannt: neu laden, aufklappen, erkennen
         self.call_from_thread(self.enter_page, page, push)
         if self.call_from_thread(self.show_special, page):
             pass  # alte Planer-Einträge haben noch Tabellen
@@ -120,27 +126,19 @@ class LoadingApp(SpecialPages, TableDisplay, LinkTreeApp):
             self.call_from_thread(self.notify, f"HTTP {response.status_code}", severity="warning")
         return response
 
-    def _page_config(self, page: CurrentPage) -> PageConfig:
-        """Ansicht je Seite aus der Config; neu erkannt: reine Navigations-
-        Bäume (nur Ebene/Titel/Aktionen) -> "tree" = nur als Links."""
-        view = "table" if has_data_tables(page.html) else "tree"
-        expand = can_expand(page.html)
-        return self.call_from_thread(self.learn_page, page, view, expand)
-
-    def learn_page(self, page: CurrentPage, view: str, expand: bool) -> PageConfig:
-        config = self.settings.pages.setdefault(page.stable_url, PageConfig())
-        config.learn(page.name, view, expand)
-        return config
-
-    def _load_tables(self, page: CurrentPage, open_col: str, expand: bool) -> list[TreeTable]:
-        """Wenn möglich einmal "Alle aufklappen" (wie ein Klick im Browser)."""
+    def _expanded(self, page: CurrentPage, expand: bool) -> tuple[list[TreeTable], str]:
+        """(Tabellen, HTML) - wenn möglich nach einmal "Alle aufklappen"."""
         try:
-            tables, html = load_tables(self.session, page.server_url, page.html,
-                                       self.client.timeout, expand)  # fmt: skip
+            return load_tables(self.session, page.server_url, page.html, self.client.timeout,
+                               expand)  # fmt: skip
         except (HISinOneError, requests.RequestException) as error:
             self.call_from_thread(self.notify, f"Aufklappen fehlgeschlagen: {error}",
                                   severity="warning")  # fmt: skip
-            tables, html = parse_tree_tables(page.html), page.html
+            return parse_tree_tables(page.html), page.html
+
+    def _show_tables(
+        self, page: CurrentPage, tables: list[TreeTable], html: str, open_col: str
+    ) -> list[TreeTable]:
         if tables:
             expanded = html if html is not page.html else None
             self.call_from_thread(self.show_tree_tables, LoadedTables(page, tables, expanded,

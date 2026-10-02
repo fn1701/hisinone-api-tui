@@ -35,9 +35,17 @@ CUSTOM_COLUMNS = [
 
 
 def is_data_table(table: TreeTable) -> bool:
-    """False für reine Navigations-Bäume (nur Ebene, Titel, Aktionen) -
-    die bleiben in der Link-Ansicht."""
-    return len([col for col in table.cols if col not in NAV_COLS]) > 1
+    """False für reine Navigations-Bäume (nur Titel mit Werten, keine Links) -
+    die bleiben in der Link-Ansicht. Leere Spalten zählen nicht (manche Bäume
+    haben unbeschriftete Spalten, die erst aufgeklappt Werte bekommen)."""
+    if any(row.get("url") for row in table.rows):
+        return True
+    filled = [col for col in table.cols if col not in NAV_COLS and _has_values(table, col)]
+    return len(filled) > 1
+
+
+def _has_values(table: TreeTable, col: str) -> bool:
+    return any(row.get(col) for row in table.rows)
 
 
 def add_custom_columns(table: TreeTable) -> None:
