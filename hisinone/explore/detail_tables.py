@@ -4,6 +4,7 @@ fallen weg; der Detail-Link einer Zeile wird zum anklickbaren ◆, Kopfzeilen
 bleiben reiner Text (ohne Sortier-Knöpfe)."""
 
 import re
+from urllib.parse import urljoin
 
 from .html_text import attribute, text_of
 
@@ -15,6 +16,7 @@ LINK = re.compile(r'<a\b[^>]*\bhref="[^"#][^"]*"[^>]*>')  # ohne "#" (nur Skript
 SORT_HINT = re.compile(r"\s*(\[Sortierbare Spalte\]|(Auf|Ab)w\u00e4rts sortieren)")
 LIST_END = re.compile(r"</li>")  # Aufzählung in einer Zelle: mit Komma
 LINK_MARK = "◆"
+MARKDOWN_LINK = re.compile(r"\]\(([^)\s]+)\)")
 
 
 def replace_tables(fragment: str, tables: list[str]) -> str:
@@ -71,3 +73,13 @@ def insert_tables(text: str, tables: list[str]) -> str:
 
 def _line(cells: list[str]) -> str:
     return "| " + " | ".join(cell.replace("|", "\\|") for cell in cells) + " |"
+
+
+def absolute_links(markdown: str, base: str) -> str:
+    """Relative Link-Ziele absolut machen: Terminal (Strg+Klick) und Export
+    kennen die Seite nicht und würden sonst file:///qisserver/... öffnen."""
+
+    def _absolute(match: re.Match[str]) -> str:
+        return f"]({urljoin(base, match.group(1))})"
+
+    return MARKDOWN_LINK.sub(_absolute, markdown)
