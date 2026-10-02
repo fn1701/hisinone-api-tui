@@ -1,4 +1,4 @@
-"""Bausteine der Tabellen-Bildschirme: Titelleiste, Befuellen, Hoehen."""
+"""Bausteine der Tabellen-Bildschirme: Titelleiste, Befüllen, Höhen."""
 
 from rich.cells import cell_len
 from rich.text import Text
@@ -13,7 +13,7 @@ from hisinone.explore.table_model import Row, TreeTable
 from .row_tree import LINK_MARK
 
 CUSTOM_STYLE = "italic magenta"  # eigene (berechnete) Spalten
-MIN_ROWS = 10  # groessere Tabellen bekommen mindestens so viele Zeilen
+MIN_ROWS = 10  # größere Tabellen bekommen mindestens so viele Zeilen
 
 TABLES_CSS = """
 TableBar { height: 1; background: $boost; color: $text-muted; padding: 0 1; }
@@ -25,7 +25,7 @@ TableBar.clickable:hover { background: $accent; color: $text; }
 
 
 class TableBar(Horizontal):
-    """Titelleiste ueber einer Tabelle: Name mittig, Aktion rechts;
+    """Titelleiste über einer Tabelle: Name mittig, Aktion rechts;
     Klick = Tabelle einzeln im Vollbild."""
 
     def __init__(self, index: int, text: str, clickable: bool):
@@ -46,12 +46,12 @@ class TableBar(Horizontal):
 
 
 class ClickTable(DataTable):
-    """DataTable, bei dem schon der erste Klick eine Zeile auswaehlt
+    """DataTable, bei dem schon der erste Klick eine Zeile auswählt
     (RowSelected); DataTable selbst setzt dabei nur den Cursor."""
 
     async def _on_click(self, event: events.Click) -> None:
         # Textual ruft danach auch DataTable._on_click auf (kein super() hier,
-        # sonst doppelt); steht der Cursor schon auf der Zeile, waehlt es sie aus
+        # sonst doppelt); steht der Cursor schon auf der Zeile, wählt es sie aus
         meta = event.style.meta
         if meta.get("row", -1) >= 0 and "column" in meta:
             self.cursor_coordinate = Coordinate(meta["row"], max(meta["column"], 0))
@@ -61,7 +61,7 @@ def fill_table(widget: DataTable, table: TreeTable, rows: list[Row], cols: list[
                marks: list[str] | None = None,
                widths: dict[str, int] | None = None) -> None:  # fmt: skip
     """marks: Auf-/Zu-Zeichen je Zeile vor dem Titel (None = keine).
-    widths: bisher groesste Breite je Spalte, wird hier erweitert; die Spalten
+    widths: bisher größte Breite je Spalte, wird hier erweitert; die Spalten
     wachsen nur (None = DataTable misst selbst)."""
     widget.clear(columns=True)
     custom = set(table.custom)
@@ -90,10 +90,10 @@ def _grow_widths(widths: dict[str, int], cols: list[str], cells: list[list]) -> 
 
 def _cell(row: Row, col: str, title: tuple[str, str | None], custom: set[str]) -> Text | str:
     """title = (Titelspalte, Auf-/Zu-Zeichen); Zeichen "" = flache Liste
-    (ohne Einrueckung), None = Baum ohne Auf-/Zu."""
+    (ohne Einrückung), None = Baum ohne Auf-/Zu."""
     value = str(row.get(col, ""))
     title_col, mark = title
-    if col == title_col:  # Titel eingerueckt wie der Baum, Wurzeln fett, Link mit Raute
+    if col == title_col:  # Titel eingerückt wie der Baum, Wurzeln fett, Link mit Raute
         indent = "" if mark == "" else "  " * row["tiefe"] + (mark or "")
         text = Text(indent + value, style="bold" if row["tiefe"] == 0 and mark != "" else "")
         return text.append(LINK_MARK, style="cyan") if row.get("url") else text

@@ -10,7 +10,7 @@ from .table_model import Row
 
 
 def hyperlink(text: str, url: str) -> str:
-    """OSC-8-Terminal-Link: der Text ist klickbar und traegt die volle URL,
+    """OSC-8-Terminal-Link: der Text ist klickbar und trägt die volle URL,
     egal wie das Terminal umbricht (tmux: terminal-features "*:hyperlinks")."""
     if not sys.stdout.isatty():
         return text
@@ -18,7 +18,7 @@ def hyperlink(text: str, url: str) -> str:
 
 
 def short_url(url: str, host: str) -> str:
-    """Pfad + Query fuer Links auf demselben Server, sonst die volle URL."""
+    """Pfad + Query für Links auf demselben Server, sonst die volle URL."""
     parts = urlsplit(url)
     return url if parts.netloc != host else urlunsplit(("", "", parts.path, parts.query, ""))
 
@@ -36,7 +36,7 @@ def _marks(link: Link, host: str) -> str:
 
 def show_links(entries: list[TreeEntry], host: str, text_filter: str) -> None:
     """Nummerierte Liste; Nummer = Position in entries (1-basiert).
-    Gruppen-Ueberschriften nur ohne Filter."""
+    Gruppen-Überschriften nur ohne Filter."""
     for number, entry in enumerate(entries, 1):
         link = entry.link
         if link is None:

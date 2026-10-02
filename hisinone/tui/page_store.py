@@ -9,7 +9,7 @@ from .current_page import CurrentPage
 
 
 class PageStore:
-    """Wie PageCache, aber mit den Objekten der Oberflaeche; ohne nutzbaren
+    """Wie PageCache, aber mit den Objekten der Oberfläche; ohne nutzbaren
     Ordner oder mit no_cache einfach aus (dann wird immer geladen)."""
 
     def __init__(self, options: CacheOptions):
@@ -20,7 +20,7 @@ class PageStore:
             self.cache = None
 
     def get(self, stable_url: str, view: str) -> tuple[CurrentPage, list[TreeTable]] | None:
-        """None auch, wenn die Tabellen-Ansicht gewuenscht ist, aber keine
+        """None auch, wenn die Tabellen-Ansicht gewünscht ist, aber keine
         Tabellen gespeichert sind (Klicks brauchen eine frische Seite); der
         Studienplaner speichert seine Tabellen je Filter extra."""
         cached = self.cache.get(stable_url) if self.cache else None

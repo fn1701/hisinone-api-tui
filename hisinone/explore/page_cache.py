@@ -1,8 +1,8 @@
-"""Zwischenspeicher fuer langsame Seiten: weniger Requests, schneller.
+"""Zwischenspeicher für langsame Seiten: weniger Requests, schneller.
 
 Pro stabiler URL eine JSON-Datei mit dem Seiten-HTML, den schon geladenen
 Tabellen (nach allen Klicks wie "Alle aufklappen") und dem Abrufzeitpunkt.
-Enthaelt Noten -> Ordner 0700, Dateien 0600.
+Enthält Noten -> Ordner 0700, Dateien 0600.
 """
 
 import hashlib
@@ -64,7 +64,7 @@ class PageCache:
 
     def put(self, page: CachedPage) -> None:
         path = self._path(page.stable_url)
-        # Erst anlegen mit 0600, dann schreiben: nie kurz fuer andere lesbar
+        # Erst anlegen mit 0600, dann schreiben: nie kurz für andere lesbar
         descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
         with os.fdopen(descriptor, "w", encoding="utf-8") as file:
             json.dump(asdict(page), file, ensure_ascii=False)
@@ -78,5 +78,5 @@ class PageCache:
 
 
 def pulled_text(pulled_at: float) -> str:
-    """Abrufzeitpunkt fuer die Anzeige, z.B. "29.09.2026 19:41"."""
+    """Abrufzeitpunkt für die Anzeige, z.B. "29.09.2026 19:41"."""
     return time.strftime("%d.%m.%Y %H:%M", time.localtime(pulled_at))

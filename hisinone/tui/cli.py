@@ -8,8 +8,8 @@ from .settings import ConfigWriter, Settings
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="HISinOne als Terminal-Oberflaeche erkunden.")
-    # Optionen ueberschreiben die Config nur, wenn sie angegeben sind (None = nicht angegeben)
+    parser = argparse.ArgumentParser(description="HISinOne als Terminal-Oberfläche erkunden.")
+    # Optionen überschreiben die Config nur, wenn sie angegeben sind (None = nicht angegeben)
     parser.add_argument("--flat", dest="tree", action="store_const", const=False,
                         help="flache Liste statt Baum (Taste t)")  # fmt: skip
     parser.add_argument("--sort", action="store_const", const=True, help="alphabetisch (Taste a)")
@@ -19,10 +19,10 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--no-cache", action="store_const", const=True,
                         help="Seiten-Cache aus (weder lesen noch schreiben)")  # fmt: skip
     parser.add_argument("--cache-ttl", type=int, metavar="SEKUNDEN",
-                        help="Cache-Eintraege nach so vielen Sekunden neu laden "
+                        help="Cache-Einträge nach so vielen Sekunden neu laden "
                              "(0 = unbegrenzt, bis zum Neustart)")  # fmt: skip
     parser.add_argument("--cache-min-load", type=int, metavar="MS",
-                        help="nur Seiten cachen, die laenger als MS laden "
+                        help="nur Seiten cachen, die länger als MS laden "
                              "(Standard 250)")  # fmt: skip
     parser.add_argument("--no-config", action="store_true",
                         help=f"{CONFIG_PATH} weder lesen noch schreiben")  # fmt: skip
@@ -53,7 +53,7 @@ def main() -> int:
     args = _parse_args()
     settings = Settings.from_config({} if args.no_config else load_config())
     _apply_options(settings, args)
-    # Writer erst nach den Optionen: sie allein sind keine Aenderung
+    # Writer erst nach den Optionen: sie allein sind keine Änderung
     writer = ConfigWriter(settings, None if args.no_config else CONFIG_PATH)
     ExploreApp(settings, writer).run()
     return 0

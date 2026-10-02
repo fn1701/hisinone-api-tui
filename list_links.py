@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Loggt sich ins HISinOne ein und listet alle Links der Startseite (Menue,
+Loggt sich ins HISinOne ein und listet alle Links der Startseite (Menü,
 Kacheln, ...) auf - um herauszufinden, welche Bereiche es gibt.
 
 Benutzung (aus dem Projekt-Hauptordner, .env wie bei login_test.py):
     python list_links.py                 # Links nach stdout
-    python list_links.py -o start.html   # zusaetzlich rohes HTML speichern
+    python list_links.py -o start.html   # zusätzlich rohes HTML speichern
 
-Achtung: start.html enthaelt persoenliche Daten - nicht committen.
+Achtung: start.html enthält persönliche Daten - nicht committen.
 """
 
 import argparse

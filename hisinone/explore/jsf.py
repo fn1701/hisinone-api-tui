@@ -49,7 +49,7 @@ def jsf_updates(
     timeout: int, values: dict[str, str] | None = None,
 ) -> dict[str, str]:  # fmt: skip
     """Klickt Button oder Link im Formular; {id des Bereichs: neues HTML}.
-    values: Eingaben im Formular (z.B. gewaehlte Filter)."""
+    values: Eingaben im Formular (z.B. gewählte Filter)."""
     fields = _ajax_fields(form_html, source_id) | (values or {})
     return jsf_partial(session, post_url, page_url, form_html, fields, timeout)
 
@@ -58,7 +58,7 @@ def jsf_partial(
     session: requests.Session, post_url: str, page_url: str, form_html: str,
     fields: dict[str, str], timeout: int,
 ) -> dict[str, str]:  # fmt: skip
-    """Ajax-Request mit den Formularfeldern plus `fields` (z.B. Blaettern
+    """Ajax-Request mit den Formularfeldern plus `fields` (z.B. Blättern
     in einer PrimeFaces-Tabelle); {id des Bereichs: neues HTML}."""
     data = hidden_fields(form_html) | fields
     pacer.step()
@@ -74,7 +74,7 @@ def jsf_partial(
 
 
 def _ajax_fields(form_html: str, source_id: str) -> dict[str, str]:
-    """Die Felder, die jsf.ajax.request zum Formular hinzufuegt."""
+    """Die Felder, die jsf.ajax.request zum Formular hinzufügt."""
     pattern = rf'<(button|a)\b[^>]*\bid="{re.escape(source_id)}"[^>]*>'
     source = re.search(pattern, form_html)
     if not source:
@@ -101,7 +101,7 @@ def _partial_ids(onclick: str, source_id: str) -> tuple[str, str]:
     render = re.search(r"render:\\?'([^'\\]*)", onclick)
     render_ids = render.group(1) if render else "@form"
     execute = re.search(r"execute:\\?'([^'\\]*)", onclick)
-    # Nur feste ids uebernehmen (z.B. ein anderes Formular); @this/@form wie bisher
+    # Nur feste ids übernehmen (z.B. ein anderes Formular); @this/@form wie bisher
     explicit = execute and "@" not in execute.group(1)
     execute_ids = execute.group(1).strip() if explicit else source_id
     return execute_ids, render_ids.replace("@this", source_id).strip()

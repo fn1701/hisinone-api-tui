@@ -23,8 +23,8 @@ def load_config(path: Path = CONFIG_PATH) -> dict:
 
 
 def write_config(config: dict, path: Path = CONFIG_PATH) -> None:
-    """Atomar schreiben (tmp + rename), nur fuer den Benutzer lesbar
-    (Filter koennen Modulnamen/Noten enthalten)."""
+    """Atomar schreiben (tmp + rename), nur für den Benutzer lesbar
+    (Filter können Modulnamen/Noten enthalten)."""
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     tmp = path.with_suffix(".tmp")
     fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)

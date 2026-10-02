@@ -1,6 +1,6 @@
 """Detailansicht einer Seite (z.B. Modulbeschreibung) lesbar als Markdown mit
 Inhaltsverzeichnis; Registerkarten mit 1-9 (gecacht, r = neu laden), Export
-als .md (e), im Browser oeffnen (o)."""
+als .md (e), im Browser öffnen (o)."""
 
 from pathlib import Path
 
@@ -19,11 +19,11 @@ from .dialogs import ExportDialog
 
 
 class DetailViewer(MarkdownViewer):
-    """Links (◆ in Tabellen) oeffnen die Seite in der App statt als Datei."""
+    """Links (◆ in Tabellen) öffnen die Seite in der App statt als Datei."""
 
     async def _on_markdown_link_clicked(self, message: Markdown.LinkClicked) -> None:
         message.stop()
-        message.prevent_default()  # sonst laedt MarkdownViewer den Link als Datei
+        message.prevent_default()  # sonst lädt MarkdownViewer den Link als Datei
         self.app.open_from_table(message.href, "")
 
 
@@ -31,10 +31,10 @@ TAB_BINDINGS = [Binding(str(number), f"tab({number})", show=False) for number in
 
 
 class DetailScreen(Screen):
-    """Abschnitte der aktiven Registerkarte; Esc zurueck zur Link-Ansicht."""
+    """Abschnitte der aktiven Registerkarte; Esc zurück zur Link-Ansicht."""
 
     BINDINGS = [
-        Binding("escape", "app.pop_screen", "Zurueck"),
+        Binding("escape", "app.pop_screen", "Zurück"),
         Binding("i", "toggle_toc", "Inhalt"),
         Binding("r", "reload", "Neu laden"),
         Binding("e", "export", "Export"),

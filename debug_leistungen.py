@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Debug fuer die Leistungen-Seite: Login, Leistungen laden, einmal "Alle
-aufklappen" (4 Requests, mit Pacer-Pausen). Gibt nur Struktur/Zaehler aus,
-keine Noten. Rohdaten landen in /tmp/hisinone-explore/ (0700, persoenlich!).
+Debug für die Leistungen-Seite: Login, Leistungen laden, einmal "Alle
+aufklappen" (4 Requests, mit Pacer-Pausen). Gibt nur Struktur/Zähler aus,
+keine Noten. Rohdaten landen in /tmp/hisinone-explore/ (0700, persönlich!).
 
     .venv/bin/python debug_leistungen.py
 """

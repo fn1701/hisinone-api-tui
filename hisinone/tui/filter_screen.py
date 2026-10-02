@@ -1,5 +1,5 @@
 """Basisklasse: Bildschirm mit Zeilenfilter und Vorschlagsliste darunter;
-mit Regex stehen dort Beispiel-Ausdruecke statt "Spalte=Wert"."""
+mit Regex stehen dort Beispiel-Ausdrücke statt "Spalte=Wert"."""
 
 from textual import on
 from textual.binding import Binding
@@ -15,8 +15,8 @@ SUGGEST_CSS = """
 
 # (Beschreibung, Ausdruck); Zeile = "Spalte=Wert | ..." samt Eltern davor
 REGEX_EXAMPLES = [
-    ("enthaelt Bestanden", "Bestanden"),
-    ("enthaelt nicht Bestanden", "^(?!.*Bestanden)"),
+    ("enthält Bestanden", "Bestanden"),
+    ("enthält nicht Bestanden", "^(?!.*Bestanden)"),
     ("PL, aber nicht Bestanden", r"^(?=.*\bPL\b)(?!.*Bestanden)"),
     ("Spalte A = Bestanden", r"\bA=Bestanden"),
     ("PV im Titel, A nicht Bestanden", r"Titel=[^|]*PV(?!.*\bA=Bestanden)"),
@@ -26,7 +26,7 @@ REGEX_EXAMPLES = [
 
 class FilterScreen(Screen):
     """Erwartet Widgets #rowfilter (Input), #suggest (OptionList) und eine
-    DataTable. Unterklassen liefern die Vorschlaege und Spaltennamen."""
+    DataTable. Unterklassen liefern die Vorschläge und Spaltennamen."""
 
     BINDINGS = [Binding("down", "open_suggest", "", show=False)]
 
@@ -64,7 +64,7 @@ class FilterScreen(Screen):
         typed = self.last_term().lower()
         options = [text for text in self.suggestions() if typed in text.lower()][:100]
         self.suggest_list.clear_options()
-        self.suggest_list.add_options(options or [Option("(keine Vorschlaege)", disabled=True)])
+        self.suggest_list.add_options(options or [Option("(keine Vorschläge)", disabled=True)])
 
     def _show_examples(self) -> None:
         """Ausdruck als id: Auswahl ersetzt das Feld (keine Begriffe)."""
@@ -86,7 +86,7 @@ class FilterScreen(Screen):
             self.hide_suggest()
 
     def on_click(self, event) -> None:
-        # Klick ins schon fokussierte Filterfeld oeffnet die Liste ebenfalls
+        # Klick ins schon fokussierte Filterfeld öffnet die Liste ebenfalls
         if getattr(event.widget, "id", None) == "rowfilter":
             self.show_suggest()
 
@@ -103,7 +103,7 @@ class FilterScreen(Screen):
     @on(DataTable.HeaderSelected)
     def header_clicked(self, event: DataTable.HeaderSelected) -> None:
         """Klick auf Spaltenkopf: 'Spalte=' als letzten Filterbegriff setzen,
-        Vorschlaege fuer diese Spalte zeigen."""
+        Vorschläge für diese Spalte zeigen."""
         col = self.column_name(event.column_index)
         self.replace_last_term((f'"{col}"' if " " in col else col) + "=")
         self.show_suggest()
@@ -121,7 +121,7 @@ class FilterScreen(Screen):
 
     def close_filter(self) -> bool:
         """Esc: erst Vorschlagsliste, dann Filterfeld verlassen.
-        False = nichts zu schliessen (Bildschirm verlassen)."""
+        False = nichts zu schließen (Bildschirm verlassen)."""
         if self.suggest_list.has_class("shown"):
             self.hide_suggest()
             if self.focused is self.suggest_list:

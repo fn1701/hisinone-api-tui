@@ -19,15 +19,15 @@ DEFAULT_SAVE_PATH = "/tmp/hisinone-explore"
 class Settings:
     tree: bool = True
     sort: bool = False
-    regex: bool = False  # Filter als regulaerer Ausdruck (alle Seiten)
+    regex: bool = False  # Filter als regulärer Ausdruck (alle Seiten)
     save_path: str = DEFAULT_SAVE_PATH
     save_on: bool = False
     cache: CacheOptions = field(default_factory=CacheOptions)
     shortcuts: list[Shortcut] = field(default_factory=default_shortcuts)
     shortcuts_from_file: bool = False  # False -> beim Beenden einmal schreiben
-    pages: dict[str, PageConfig] = field(default_factory=dict)  # Schluessel = stabile URL
+    pages: dict[str, PageConfig] = field(default_factory=dict)  # Schlüssel = stabile URL
     collapsed: CollapsedNodes = field(default_factory=CollapsedNodes)  # Link-Baum
-    # alte Config (Tabellen ohne Seite): beim ersten Treffer in die Seite uebernehmen
+    # alte Config (Tabellen ohne Seite): beim ersten Treffer in die Seite übernehmen
     legacy_tables: dict[str, dict] = field(default_factory=dict)
 
     @classmethod
@@ -63,14 +63,14 @@ class Settings:
                   "pages": {url: page.to_dict() for url, page in self.pages.items()}}  # fmt: skip
         if with_collapsed:
             config["collapsed"] = self.collapsed.paths
-        if self.collapsed.overrides:  # nur aus der Datei, unveraendert zurueck
+        if self.collapsed.overrides:  # nur aus der Datei, unverändert zurück
             config["collapsed_overrides"] = self.collapsed.overrides_dict()
         if self.legacy_tables:
             config["tables"] = self.legacy_tables
         return config
 
     def page_tables(self, url: str, tables: list[TreeTable]) -> dict[str, TablePrefs]:
-        """Tabellen-Einstellungen der Seite; alte seitenlose werden uebernommen."""
+        """Tabellen-Einstellungen der Seite; alte seitenlose werden übernommen."""
         prefs = self.pages[url].tables
         for table in tables:
             key = table.prefs_key
@@ -80,9 +80,9 @@ class Settings:
 
 
 class ConfigWriter:
-    """Schreibt nur, wenn sich seit dem letzten Schreiben etwas geaendert hat.
-    Zwischendurch zaehlt der Link-Baum (collapsed) nicht als Aenderung, beim
-    Beenden schon - so erzeugt Auf-/Zuklappen keine Schreibvorgaenge."""
+    """Schreibt nur, wenn sich seit dem letzten Schreiben etwas geändert hat.
+    Zwischendurch zählt der Link-Baum (collapsed) nicht als Änderung, beim
+    Beenden schon - so erzeugt Auf-/Zuklappen keine Schreibvorgänge."""
 
     def __init__(self, settings: Settings, path: Path | None):
         self.settings, self.path = settings, path  # path None = --no-config

@@ -8,20 +8,20 @@ Row = dict
 
 @dataclass
 class TreeTable:
-    name: str  # Ueberschrift vor der Tabelle ("" wenn keine)
-    cols: list[str]  # Spaltenkoepfe der Seite
+    name: str  # Überschrift vor der Tabelle ("" wenn keine)
+    cols: list[str]  # Spaltenköpfe der Seite
     rows: list[Row]
     custom: list[str] = field(default_factory=list)  # eigene, berechnete Spalten
-    start_folded: bool = False  # grosse Baeume: anfangs nur die oberste Ebene zeigen
+    start_folded: bool = False  # große Bäume: anfangs nur die oberste Ebene zeigen
 
     @property
     def title_col(self) -> str:
-        """Spalte mit dem (eingerueckten) Titel: die erste ausser "Ebene"."""
+        """Spalte mit dem (eingerückten) Titel: die erste außer "Ebene"."""
         return next((col for col in self.cols if col != "Ebene"), "")
 
     @property
     def display_name(self) -> str:
-        """Ueberschrift, sonst der erste Titel (Wurzel des Baums)."""
+        """Überschrift, sonst der erste Titel (Wurzel des Baums)."""
         if self.name:
             return self.name
         return next((row[self.title_col] for row in self.rows if row.get(self.title_col)),
@@ -29,5 +29,5 @@ class TreeTable:
 
     @property
     def prefs_key(self) -> str:
-        """Schluessel der Tabellen-Einstellungen in der Config."""
+        """Schlüssel der Tabellen-Einstellungen in der Config."""
         return f"{self.display_name} [{','.join(self.cols)}]"

@@ -17,8 +17,8 @@ from .table_state import TableViewState
 
 
 class PlannerScreen(SingleTableScreen):
-    """Tabelle anfangs leer; "Uebernehmen" ruft app.load_planner(Seite,
-    Auswahl, frisch), das Ergebnis kommt ueber show_table."""
+    """Tabelle anfangs leer; "Übernehmen" ruft app.load_planner(Seite,
+    Auswahl, frisch), das Ergebnis kommt über show_table."""
 
     BINDINGS = [
         Binding("l", "load(False)", "Übernehmen"),
@@ -42,11 +42,11 @@ class PlannerScreen(SingleTableScreen):
         self.filter_input.value = self.state.filter
         self.page_name = page.title_with_time()
         self.refresh_table()
-        self.focus_rows()  # Tasten (g, o, t, ...) gleich fuer die Tabelle
+        self.focus_rows()  # Tasten (g, o, t, ...) gleich für die Tabelle
 
     def set_page(self, page, choice: PlannerChoice) -> None:
-        """Seite nach dem Laden (mit allen Filtern): fuer die Listen und fuer
-        das naechste Laden, das deren Seitenleiste abschickt."""
+        """Seite nach dem Laden (mit allen Filtern): für die Listen und für
+        das nächste Laden, das deren Seitenleiste abschickt."""
         self.page = page
         self.query_one(PlannerControls).set_page(page, choice)
 
@@ -59,7 +59,7 @@ class PlannerScreen(SingleTableScreen):
         self.action_fullscreen()
 
     def on_screen_resume(self) -> None:
-        """Zurueck aus dem Vollbild: dort geaenderte Filter/Spalten uebernehmen."""
+        """Zurück aus dem Vollbild: dort geänderte Filter/Spalten übernehmen."""
         if self.table.rows:
             self.show_table(self.page, self.table, self.state.page_prefs)
 

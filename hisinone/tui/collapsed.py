@@ -1,5 +1,5 @@
-"""Zugeklappte Knoten im Link-Baum: global fuer alle Seiten (die Navigation
-steht ueberall), dazu Ausnahmen je Seite, die nur in der Config-Datei stehen.
+"""Zugeklappte Knoten im Link-Baum: global für alle Seiten (die Navigation
+steht überall), dazu Ausnahmen je Seite, die nur in der Config-Datei stehen.
 
 Pfade haben die Form "Eltern › Kind"; alles nicht Zugeklappte ist offen.
 """
@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 
 @dataclass
 class CollapsedOverride:
-    """Ausnahme fuer eine Seite: diese Pfade immer offen bzw. immer zu."""
+    """Ausnahme für eine Seite: diese Pfade immer offen bzw. immer zu."""
 
     open: list[str] = field(default_factory=list)
     closed: list[str] = field(default_factory=list)
@@ -24,7 +24,7 @@ class CollapsedOverride:
 
 @dataclass
 class CollapsedNodes:
-    """Globale Menge plus Ausnahmen; Auf-/Zuklappen in der TUI aendert nur
+    """Globale Menge plus Ausnahmen; Auf-/Zuklappen in der TUI ändert nur
     die globale Menge, die Ausnahmen gewinnen beim Anzeigen."""
 
     paths: list[str] = field(default_factory=list)

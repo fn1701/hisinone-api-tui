@@ -1,6 +1,6 @@
-"""Registerkarten einer Detailseite: Formular-Knoepfe ohne eigene URL
+"""Registerkarten einer Detailseite: Formular-Knöpfe ohne eigene URL
 (myfaces.oam.submitForm). Klicken = das ganze Formular absenden wie der
-Browser; die Antwort ist die Seite mit der gewaehlten Registerkarte."""
+Browser; die Antwort ist die Seite mit der gewählten Registerkarte."""
 
 import re
 from dataclasses import dataclass
@@ -14,7 +14,7 @@ from .pacer import pacer
 
 FORM_ID = "detailViewData"
 TAB = re.compile(r'<button\b[^>]*role="tab"[^>]*>')
-TAB_KEY = "#tab:"  # Cache-Schluessel: stabile URL + TAB_KEY + Knopf-Id
+TAB_KEY = "#tab:"  # Cache-Schlüssel: stabile URL + TAB_KEY + Knopf-Id
 
 
 @dataclass
@@ -46,7 +46,7 @@ def click_tab(
     session: requests.Session, page_url: str, html: str, tab: DetailTab, timeout: int
 ) -> requests.Response:
     """Sendet das Formular wie submitForm (Knopf als _idcl und Parameter
-    DISABLE_VALIDATION); html muss frisch sein (gueltiger ViewState)."""
+    DISABLE_VALIDATION); html muss frisch sein (gültiger ViewState)."""
     action, form_html = find_form(html, FORM_ID)
     data = hidden_fields(form_html) | {
         f"{FORM_ID}:_idcl": tab.button_id,

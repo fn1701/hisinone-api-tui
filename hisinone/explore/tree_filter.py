@@ -1,10 +1,10 @@
-"""Zeilenfilter fuer Baum-Tabellen: eine Zeile passt, wenn der Filter auf sie
-samt ihren Eltern passt (so gilt ein Treffer im Modul fuer alles darunter,
-und ein Ausschluss wie ``^(?!.*Bestanden)`` blendet ganze Teilbaeume aus).
+"""Zeilenfilter für Baum-Tabellen: eine Zeile passt, wenn der Filter auf sie
+samt ihren Eltern passt (so gilt ein Treffer im Modul für alles darunter,
+und ein Ausschluss wie ``^(?!.*Bestanden)`` blendet ganze Teilbäume aus).
 Gezeigt werden die Treffer und, als Zusammenhang, ihre Eltern.
 
 Zwei Arten: normal ("Text" / "Spalte=Wert", siehe row_filter) oder ein
-regulaerer Ausdruck (Python ``re``, Gross-/Kleinschreibung egal) auf der
+regulärer Ausdruck (Python ``re``, Groß-/Kleinschreibung egal) auf der
 Zeile als Text "Spalte=Wert | Spalte=Wert | ...", Eltern davor.
 """
 
@@ -20,8 +20,8 @@ PathTest = Callable[[list[Row]], bool]  # Zeile mit Eltern (Wurzel zuerst) -> pa
 def filter_tree(
     rows: list[Row], cols: list[str], query: str, regex: bool, parents: bool = True
 ) -> list[Row]:
-    """Treffer plus Eltern (parents=False: nur die Treffer, fuer die flache
-    Liste) in Baum-Reihenfolge. regex=True: re.error bei ungueltigem Ausdruck
+    """Treffer plus Eltern (parents=False: nur die Treffer, für die flache
+    Liste) in Baum-Reihenfolge. regex=True: re.error bei ungültigem Ausdruck
     (der Aufrufer zeigt dann das alte Ergebnis)."""
     test: PathTest = _RegexTest(cols, query) if regex else _TermsTest(cols, query)
     keep = [False] * len(rows)
@@ -36,12 +36,12 @@ def filter_tree(
 
 
 def row_line(row: Row, cols: list[str]) -> str:
-    """Zeile als Text fuer den regulaeren Ausdruck (leere Spalten fehlen)."""
+    """Zeile als Text für den regulären Ausdruck (leere Spalten fehlen)."""
     return " | ".join(f"{col}={row[col]}" for col in cols if row.get(col, "") != "")
 
 
 class _RegexTest:
-    """Regulaerer Ausdruck auf Eltern + Zeile als ein Text."""
+    """Regulärer Ausdruck auf Eltern + Zeile als ein Text."""
 
     def __init__(self, cols: list[str], query: str):
         self.cols = cols

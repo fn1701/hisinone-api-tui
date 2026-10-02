@@ -1,4 +1,4 @@
-"""Geladene Tabellen anzeigen (gemeinsam fuer normale Seiten und den
+"""Geladene Tabellen anzeigen (gemeinsam für normale Seiten und den
 Studienplaner)."""
 
 from hisinone.explore.storage import save_html
@@ -8,7 +8,7 @@ from .tables_screen import TreeTablesScreen, tables_screen
 
 
 class TableDisplay:
-    """Mixin fuer LoadingApp (nutzt settings, save_dir, push_screen)."""
+    """Mixin für LoadingApp (nutzt settings, save_dir, push_screen)."""
 
     def save_expanded(self, loaded: LoadedTables) -> None:
         """Aufgeklapptes HTML speichern, wenn Speichern eingeschaltet ist."""

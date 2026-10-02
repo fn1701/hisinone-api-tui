@@ -1,4 +1,4 @@
-"""Besuchte Seiten als HTML speichern (enthalten persoenliche Daten!)."""
+"""Besuchte Seiten als HTML speichern (enthalten persönliche Daten!)."""
 
 import re
 import time
@@ -12,8 +12,8 @@ def timestamp() -> str:
 
 
 def prepare_save_dir(path: str) -> Path:
-    """Legt den Speicherordner an. Seiten enthalten persoenliche Daten ->
-    Ordner nur fuer den eigenen User lesbar."""
+    """Legt den Speicherordner an. Seiten enthalten persönliche Daten ->
+    Ordner nur für den eigenen User lesbar."""
     directory = Path(path)
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     directory.chmod(0o700)

@@ -17,7 +17,7 @@ venv/
 .vscode/
 .idea/
 
-# Gespeicherte Seiten / Skript-Ausgaben (persoenliche Daten)
+# Gespeicherte Seiten / Skript-Ausgaben (persönliche Daten)
 start.html
 list_links.txt
 *.html

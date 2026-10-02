@@ -1,5 +1,5 @@
 """Seiten mit eigener Ansicht statt Tabellen: Studienplaner (erst Studiengang
-und Filter waehlen) und Detailseiten (z.B. Modulbeschreibung)."""
+und Filter wählen) und Detailseiten (z.B. Modulbeschreibung)."""
 
 from hisinone.explore.detail_view import has_detail_view
 from hisinone.explore.planner import is_study_planner
@@ -11,7 +11,7 @@ from .planner_app import PlannerLoading
 
 
 class SpecialPages(DetailLoading, PlannerLoading):
-    """Mixin fuer LoadingApp."""
+    """Mixin für LoadingApp."""
 
     def show_special(self, page: CurrentPage) -> bool:
         """True = eigene Ansicht gezeigt (dann keine Tabellen laden)."""

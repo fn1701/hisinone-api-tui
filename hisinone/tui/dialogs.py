@@ -8,17 +8,17 @@ from textual.widgets import Footer, Input, SelectionList
 
 
 class ColumnsDialog(ModalScreen[list[str] | None]):
-    """Spalten an-/abwaehlen (Leertaste), Enter = uebernehmen, Esc = abbrechen."""
+    """Spalten an-/abwählen (Leertaste), Enter = übernehmen, Esc = abbrechen."""
 
     BINDINGS = [
         Binding("escape", "dismiss(None)", "Abbrechen"),
-        Binding("enter", "apply", "Uebernehmen", priority=True),
+        Binding("enter", "apply", "Übernehmen", priority=True),
     ]
     CSS = "ColumnsDialog { align: center middle; } SelectionList { width: 50; height: 24; }"
 
     def __init__(self, options: list[tuple]):
         super().__init__()
-        self.options = options  # (Anzeige, Schluessel, an?)
+        self.options = options  # (Anzeige, Schlüssel, an?)
 
     def compose(self) -> ComposeResult:
         yield SelectionList[str](*self.options)

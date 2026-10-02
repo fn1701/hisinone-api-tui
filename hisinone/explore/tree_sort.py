@@ -1,4 +1,4 @@
-"""Alphabetische Reihenfolge einer Baum-Tabelle (ohne Oberflaeche).
+"""Alphabetische Reihenfolge einer Baum-Tabelle (ohne Oberfläche).
 
 Sortiert werden nur Geschwister; jeder Knoten nimmt seine Nachfahren mit,
 so bleiben Module unter ihrem Katalog.
@@ -17,13 +17,13 @@ def sort_tree(rows: list[Row], title_col: str) -> list[Row]:
 
 
 def title_key(row: Row, title_col: str) -> str:
-    """Ohne Gross-/Kleinschreibung und fuehrende Satzzeichen (".Net" unter N)."""
+    """Ohne Groß-/Kleinschreibung und führende Satzzeichen (".Net" unter N)."""
     title = str(row.get(title_col, "")).casefold()
     return title.lstrip(" .-_#*\"'([")
 
 
 def _blocks(rows: list[Row]) -> list[list[Row]]:
-    """Teilbaeume der obersten Ebene in rows: Knoten plus Nachfahren."""
+    """Teilbäume der obersten Ebene in rows: Knoten plus Nachfahren."""
     blocks: list[list[Row]] = []
     top = min((row["tiefe"] for row in rows), default=0)
     for row in rows:

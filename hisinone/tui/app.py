@@ -11,18 +11,18 @@ from .settings import ConfigWriter, Settings
 class ExploreApp(NavigationApp):
     TITLE = "HISinOne Explorer"
     BINDINGS = [
-        Binding("b", "back", "Zurueck"),
+        Binding("b", "back", "Zurück"),
         Binding("r", "reload", "Neu laden"),
         Binding("h", "home", "Startseite"),
         Binding("slash", "focus_filter", "Filter", priority=True),
-        # show=False: nicht in der Fusszeile, nur Taste + Befehlspalette (Strg+P)
+        # show=False: nicht in der Fußzeile, nur Taste + Befehlspalette (Strg+P)
         Binding("t", "toggle_tree", "Baum an/aus", show=False),
         Binding("a", "toggle_sort", "Alphabetisch an/aus", show=False),
-        Binding("exclamation_mark", "force_open", "Trotzdem oeffnen", show=False),
+        Binding("exclamation_mark", "force_open", "Trotzdem öffnen", show=False),
         Binding("c", "copy_url", "URL kopieren"),
         Binding("n", "copy_name", "Name kopieren", show=False),
         Binding("v", "toggle_view", "Tabelle/Links", show=False),
-        Binding("o", "browser", "Im Browser oeffnen", show=False),
+        Binding("o", "browser", "Im Browser öffnen", show=False),
         Binding("s", "toggle_save", "Speichern an/aus", show=False),
         Binding("escape", "focus_tree", "", show=False),
         Binding("q", "quit", "Beenden", show=False),
@@ -34,7 +34,7 @@ class ExploreApp(NavigationApp):
         self.writer = writer
 
     def action_toggle_regex(self) -> None:
-        """Wie Klick auf die Checkbox (gilt fuer alle Seiten)."""
+        """Wie Klick auf die Checkbox (gilt für alle Seiten)."""
         boxes = self.screen.query("#regex")
         if boxes:
             boxes.first().toggle()
@@ -86,7 +86,7 @@ class ExploreApp(NavigationApp):
     def on_mount(self) -> None:
         self.bind_shortcuts()
         self.set_interval(AUTOSAVE_SECONDS, self.save_config)
-        self.link_tree.auto_expand = False  # Klick oeffnet den Link, klappt nicht nur auf
+        self.link_tree.auto_expand = False  # Klick öffnet den Link, klappt nicht nur auf
         self.link_tree.show_root = False
         self.link_tree.loading = True
         self.do_login()
@@ -96,7 +96,7 @@ class ExploreApp(NavigationApp):
 
 
 class ShortcutCall:
-    """Befehl der Befehlspalette fuer einen Shortcut (statt einer Lambda)."""
+    """Befehl der Befehlspalette für einen Shortcut (statt einer Lambda)."""
 
     def __init__(self, app: ExploreApp, index: int):
         self.app, self.index = app, index

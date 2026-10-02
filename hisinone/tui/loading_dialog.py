@@ -1,4 +1,4 @@
-"""Hinweis waehrend langer Ladevorgaenge: aktueller Schritt und vergangene Zeit."""
+"""Hinweis während langer Ladevorgänge: aktueller Schritt und vergangene Zeit."""
 
 import time
 
@@ -9,8 +9,8 @@ from textual.widgets import LoadingIndicator, Static
 
 
 class LoadingDialog(ModalScreen):
-    """Modal, damit waehrenddessen nichts anderes ausgeloest wird; die App
-    schliesst ihn, wenn das Laden fertig (oder fehlgeschlagen) ist."""
+    """Modal, damit währenddessen nichts anderes ausgelöst wird; die App
+    schließt ihn, wenn das Laden fertig (oder fehlgeschlagen) ist."""
 
     CSS = """
     LoadingDialog { align: center middle; }

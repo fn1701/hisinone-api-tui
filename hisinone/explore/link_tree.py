@@ -15,7 +15,7 @@ TreeKey = tuple[str, ...]
 
 @dataclass
 class TreeEntry:
-    """Eine Zeile des Baums: Link oder Gruppen-Ueberschrift (link=None)."""
+    """Eine Zeile des Baums: Link oder Gruppen-Überschrift (link=None)."""
 
     label: str
     depth: int
@@ -63,7 +63,7 @@ class LinkTreeBuilder:
         return children
 
     def _nearest_parent(self, key: TreeKey) -> TreeKey:
-        # Zwischenebenen koennen fehlen -> naechsten vorhandenen Vorfahren nehmen
+        # Zwischenebenen können fehlen -> nächsten vorhandenen Vorfahren nehmen
         parent = key[:-1]
         while len(parent) > 1 and parent not in self.keyed:
             parent = parent[:-1]

@@ -23,7 +23,7 @@ repos:
     hooks:
       - id: editorconfig-checker
         alias: ec
-        # Einrueckung prueft ruff; Ausrichtung in Docstrings/README ist kein Fehler
+        # Einrückung prüft ruff; Ausrichtung in Docstrings/README ist kein Fehler
         args: [-disable-indent-size]
   # renovate: datasource=github-tags depName=astral-sh/ruff-pre-commit
   - repo: https://github.com/astral-sh/ruff-pre-commit

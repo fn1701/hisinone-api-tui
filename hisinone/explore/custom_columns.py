@@ -7,14 +7,14 @@ from dataclasses import dataclass
 from .exams import exam_kind
 from .table_model import Row, TreeTable
 
-# Spalten reiner Navigations-Baeume (z.B. Vorlesungsverzeichnis)
+# Spalten reiner Navigations-Bäume (z.B. Vorlesungsverzeichnis)
 NAV_COLS = {"Ebene", "Aktionen", ""}
 
 
 @dataclass
 class CustomColumn:
     name: str
-    needs: set[str]  # gilt fuer Tabellen mit diesen Original-Spalten
+    needs: set[str]  # gilt für Tabellen mit diesen Original-Spalten
     value: Callable[[Row], str]
 
 
@@ -27,7 +27,7 @@ def _exam_kind(row: Row) -> str:
 
 
 CUSTOM_COLUMNS = [
-    # alle Baum-Tabellen: Typ aus dem Symbol im Titel (Modul, Pruefung, Konto, ...)
+    # alle Baum-Tabellen: Typ aus dem Symbol im Titel (Modul, Prüfung, Konto, ...)
     CustomColumn("Typ", set(), _kind_icon),
     # Leistungen: PL/PVL (Regeln siehe exam_kind)
     CustomColumn("Art", {"Titel", "Versuch", "Bewertung", "Freiversuch"}, _exam_kind),
@@ -35,7 +35,7 @@ CUSTOM_COLUMNS = [
 
 
 def is_data_table(table: TreeTable) -> bool:
-    """False fuer reine Navigations-Baeume (nur Ebene, Titel, Aktionen) -
+    """False für reine Navigations-Bäume (nur Ebene, Titel, Aktionen) -
     die bleiben in der Link-Ansicht."""
     return len([col for col in table.cols if col not in NAV_COLS]) > 1
 

@@ -15,7 +15,7 @@ def has_tables(html: str) -> bool:
 
 
 def has_data_tables(html: str) -> bool:
-    """False fuer reine Navigations-Baeume (die bleiben Links)."""
+    """False für reine Navigations-Bäume (die bleiben Links)."""
     if is_study_planner(html):
         return True
     return any(is_data_table(table) for table in parse_tree_tables(html))
@@ -30,7 +30,7 @@ def load_tables(
     filters: dict[str, str] | None = None, progress: Progress = no_progress,
     course_id: str = "",
 ) -> tuple[list[TreeTable], str]:  # fmt: skip
-    """(Tabellen, HTML das sie enthaelt); Studienplaner: 2-4 Requests, mit Filtern."""
+    """(Tabellen, HTML das sie enthält); Studienplaner: 2-4 Requests, mit Filtern."""
     if is_study_planner(html):
         return PlannerLoader(session, page_url, html, timeout).load(expand, filters, progress,
                                                                          course_id)  # fmt: skip

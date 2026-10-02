@@ -10,7 +10,7 @@ from .dialogs import ExportDialog
 
 
 class TableExport:
-    """Mixin fuer SingleTableScreen: braucht self.table, self.shown_rows,
+    """Mixin für SingleTableScreen: braucht self.table, self.shown_rows,
     self.state und self.app."""
 
     def action_export(self) -> None:
@@ -18,7 +18,7 @@ class TableExport:
         default = prepare_save_dir(self.app.save_path) / f"{name}_{timestamp()}.csv"
         rows, cols = self.shown_rows, self.state.active_cols()
 
-        def done(path: str | None) -> None:  # Zeilen/Spalten wie beim Oeffnen des Dialogs
+        def done(path: str | None) -> None:  # Zeilen/Spalten wie beim Öffnen des Dialogs
             if path:
                 self._export(rows, cols, path)
 

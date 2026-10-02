@@ -2,8 +2,8 @@
 """
 Beispiel: HISinOne Noten API in ein eigenes Skript einbauen.
 
-Zeigt, wie man den Notenspiegel abruft, das zurueckgegebene dict
-weiterverarbeitet und die Status-/Modul-Kuerzel ausschreibt. Ausfuehren aus
+Zeigt, wie man den Notenspiegel abruft, das zurückgegebene dict
+weiterverarbeitet und die Status-/Modul-Kürzel ausschreibt. Ausführen aus
 dem Projektordner:
 
     python examples/beispiel.py
@@ -17,14 +17,14 @@ import time
 from pathlib import Path
 
 # Damit "import hisinone_noten" funktioniert, wenn das Beispiel aus dem
-# examples/-Unterordner laeuft: den Projekt-Hauptordner auf den Suchpfad legen.
+# examples/-Unterordner läuft: den Projekt-Hauptordner auf den Suchpfad legen.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from legende import ART_LEGENDE, SEMESTER_LEGENDE, STATUS_LEGENDE  # noqa: E402
 
 from hisinone_noten import HISinOneAuthError, HISinOneClient, HISinOneError  # noqa: E402
 
-# Windows-Konsole auf UTF-8 (fuer Umlaute in der Legende)
+# Windows-Konsole auf UTF-8 (für Umlaute in der Legende)
 with contextlib.suppress(Exception):
     sys.stdout.reconfigure(encoding="utf-8")
 
@@ -35,7 +35,7 @@ def komma_float(wert: str) -> float:
 
 
 def bedeutung(code: str, daten: dict) -> str:
-    """Schreibt ein Kuerzel aus: bevorzugt die vom Notenspiegel gelieferte
+    """Schreibt ein Kürzel aus: bevorzugt die vom Notenspiegel gelieferte
     daten['legende'], sonst die eingebauten Referenz-Tabellen oben."""
     leg = daten.get("legende", {})
     return (
@@ -48,7 +48,7 @@ def bedeutung(code: str, daten: dict) -> str:
 
 
 def noten_mit_wiederholung(versuche: int = 5, pause: int = 10) -> dict:
-    """Ruft den Notenspiegel ab und faengt die sporadische "leere Seite" des
+    """Ruft den Notenspiegel ab und fängt die sporadische "leere Seite" des
     QIS-Portals ab: bei einem HISinOneError kurz warten und erneut versuchen.
     Falsche Zugangsdaten (HISinOneAuthError) brechen sofort ab - da hilft kein
     Retry."""
@@ -76,7 +76,7 @@ def zeige_stammdaten(daten: dict) -> None:
 
 
 def pl_nach_status(daten: dict) -> dict[str, list]:
-    """Nur echte Pruefungsleistungen (Art == 'PL'), nach Status gruppiert."""
+    """Nur echte Prüfungsleistungen (Art == 'PL'), nach Status gruppiert."""
     gruppen: dict[str, list] = {}
     for p in daten["pruefungen"]:
         if p["art"] == "PL":
@@ -85,7 +85,7 @@ def pl_nach_status(daten: dict) -> dict[str, list]:
 
 
 def zeige_gruppen(gruppen: dict[str, list], daten: dict) -> None:
-    """Das Status-Kuerzel wird jeweils ausgeschrieben."""
+    """Das Status-Kürzel wird jeweils ausgeschrieben."""
     print(f"Prüfungen ({ART_LEGENDE['PL']}) nach Status:")
     for status in sorted(gruppen):
         items = gruppen[status]
@@ -96,7 +96,7 @@ def zeige_gruppen(gruppen: dict[str, list], daten: dict) -> None:
 
 
 def zeige_schnitt(bestanden: list) -> None:
-    """Eigener, credits-gewichteter Schnitt ueber die benoteten Bestandenen."""
+    """Eigener, credits-gewichteter Schnitt über die benoteten Bestandenen."""
     benotet = [p for p in bestanden if p["note"]]
     summe_cp = sum(komma_float(p["credits"]) for p in benotet)
     if summe_cp:
@@ -107,7 +107,7 @@ def zeige_schnitt(bestanden: list) -> None:
 
 
 def zeige_legende(daten: dict) -> None:
-    """Die im Notenspiegel gefundenen Kuerzel (JSON-Feld 'legende'); faellt
+    """Die im Notenspiegel gefundenen Kürzel (JSON-Feld 'legende'); fällt
     das mal leer aus, die eingebaute Referenz zeigen."""
     print("\n" + "-" * 60)
     print("Legende (Kürzel im Notenspiegel):")
@@ -125,7 +125,7 @@ def main() -> int:
         print("Benutzername oder Passwort stimmt nicht.", file=sys.stderr)
         return 1
     except HISinOneError as e:
-        print("Abruf endgueltig fehlgeschlagen:", e, file=sys.stderr)
+        print("Abruf endgültig fehlgeschlagen:", e, file=sys.stderr)
         return 1
     zeige_stammdaten(daten)
     gruppen = pl_nach_status(daten)

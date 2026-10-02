@@ -79,7 +79,7 @@ def _columns(rows: list[Row]) -> list[str]:
 
 
 def _count(rows: list[Row], name: ColumnName) -> int:
-    """Hoechste Position einer Spalte dieser Art in allen Zeilen."""
+    """Höchste Position einer Spalte dieser Art in allen Zeilen."""
     count = 0
     for row in rows:
         while name(count + 1) in row:

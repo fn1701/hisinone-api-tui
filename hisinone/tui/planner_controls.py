@@ -1,5 +1,5 @@
 """Bedienleiste des Studienplaners: Studiengang, Filter der Seitenleiste
-(live aus der Seite) und der Button zum Uebernehmen."""
+(live aus der Seite) und der Button zum Übernehmen."""
 
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
@@ -30,7 +30,7 @@ class PlannerControls(Vertical):
 
     def set_page(self, page, choice: PlannerChoice) -> None:
         """Nach dem Laden: Seite mit allen Filtern (manche gibt es erst,
-        wenn ein Studiengang gewaehlt ist)."""
+        wenn ein Studiengang gewählt ist)."""
         self.page, self.choice, self.filters = page, choice, parse_filters(page.html)
         self.refresh(recompose=True)
 

@@ -1,6 +1,6 @@
-"""Studienplaner laden: wie im Browser erst den Studiengang waehlen (Link
+"""Studienplaner laden: wie im Browser erst den Studiengang wählen (Link
 "doChangeDepp"), dann alle obersten Knoten auf eine Seite holen (der Baum
-blaettert sonst zu je 10), dann "Alle aufklappen" - zusammen 2-3 Requests.
+blättert sonst zu je 10), dann "Alle aufklappen" - zusammen 2-3 Requests.
 
 Der Baum steht nicht in der Seite, sondern kommt erst per Ajax nach dem Klick
 auf den Studiengang.
@@ -24,7 +24,7 @@ from .table_model import TreeTable
 FORM_ID = "studyPlanner"
 EXPAND_BTN = f"{CONTENT}:expandAllBtn"
 TREE_ID = f"{CONTENT}:studyPlannerTree"
-# Blaettern im Baum: PrimeFaces.cw("TreeTable", ..., paginator:{..., rows:10, rowCount:24
+# Blättern im Baum: PrimeFaces.cw("TreeTable", ..., paginator:{..., rows:10, rowCount:24
 PAGINATOR = re.compile(r"paginator:\{[^}]*?\brows:(\d+),rowCount:(\d+)")
 Progress = Callable[[str], None]  # z.B. "Schritt 2/4: Studiengang"
 
@@ -82,8 +82,8 @@ class PlannerLoader:
         self.progress(f"Schritt {index + 1}/{len(steps)}: {steps[index]}")
 
     def _apply_filters(self, filters: dict[str, str]) -> None:
-        """Wie "Uebernehmen" in der Seitenleiste; der Server merkt sich die
-        Filter fuer den folgenden Klick auf den Studiengang. Erster Request,
+        """Wie "Übernehmen" in der Seitenleiste; der Server merkt sich die
+        Filter für den folgenden Klick auf den Studiengang. Erster Request,
         daher passt der ViewState der Seitenleiste noch."""
         action, form_html = self.sidebar
         button = apply_button(form_html)
@@ -95,8 +95,8 @@ class PlannerLoader:
         self._remember_view_state(updates)
 
     def _all_top_nodes(self, tree_html: str) -> str:
-        """Alle obersten Knoten auf eine Seite (1 Request, nur wenn geblaettert
-        wird); der Server merkt sich die Seitengroesse fuer "Alle aufklappen"."""
+        """Alle obersten Knoten auf eine Seite (1 Request, nur wenn geblättert
+        wird); der Server merkt sich die Seitengröße für "Alle aufklappen"."""
         paging = PAGINATOR.search(tree_html)
         if not paging or int(paging.group(2)) <= int(paging.group(1)):
             return tree_html

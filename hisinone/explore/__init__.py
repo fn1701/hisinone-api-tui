@@ -1,4 +1,4 @@
-"""HISinOne erkunden: Login, Links, Baum-Tabellen, Leistungen (ohne Oberflaeche).
+"""HISinOne erkunden: Login, Links, Baum-Tabellen, Leistungen (ohne Oberfläche).
 
 Module (jeweils eine Aufgabe):
     pacer, session        Zufallspausen, Login, Seitenabruf

@@ -25,7 +25,7 @@ def _run(command: list[str], text: str) -> bool:
 
 
 def copy_to_clipboard(text: str) -> str:
-    """Kopiert in die Zwischenablage; ohne Tool per OSC 52 ueber das Terminal
+    """Kopiert in die Zwischenablage; ohne Tool per OSC 52 über das Terminal
     (tmux: set -g set-clipboard on). Liefert, womit kopiert wurde."""
     tool = copy_external(text)
     if tool:

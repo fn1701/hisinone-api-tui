@@ -5,9 +5,9 @@ import time
 
 from .html_table import norm_label, rows, tables
 
-# Spalten-Codes fuer "Art" (siehe Legende im Notenspiegel):
+# Spalten-Codes für "Art" (siehe Legende im Notenspiegel):
 #   GE = Modul, PL = Teilmodul, MB/MM = Modul Bachelor-/Masterarbeit,
-#   AA = Abschlussarbeit. Nur solche Zeilen sind einzelne Pruefungen.
+#   AA = Abschlussarbeit. Nur solche Zeilen sind einzelne Prüfungen.
 ART_CODES = {"GE", "PL", "MB", "MM", "AA"}
 EXAM_FIELDS = ["pruefungsnummer", "text", "art", "note", "status", "vermerk",
                "credits", "versuch", "semester", "pruefungsdatum", "abgabe"]  # fmt: skip
@@ -23,7 +23,7 @@ def parse_notenspiegel(html: str) -> dict:
 
 
 class NotenspiegelParser:
-    """Sammelt beim Durchlaufen der Tabellen Stammdaten, Legende, Pruefungen
+    """Sammelt beim Durchlaufen der Tabellen Stammdaten, Legende, Prüfungen
     und Konten; result() baut daraus das Ergebnis."""
 
     def __init__(self) -> None:
@@ -38,7 +38,7 @@ class NotenspiegelParser:
 
     def add_table(self, table_rows: list[list[str]]) -> None:
         flat = " ".join(cell for row in table_rows for cell in row)
-        # Stammdaten-Tabelle: Key/Value, enthaelt "Matrikelnummer"
+        # Stammdaten-Tabelle: Key/Value, enthält "Matrikelnummer"
         if "Matrikelnummer" in flat and all(len(row) <= 2 for row in table_rows if row):
             self._add_student(table_rows)
         elif "Erl" in flat and "AN - angemeldet" in flat:
@@ -63,7 +63,7 @@ class NotenspiegelParser:
             match = re.search(r"Studiengang:\s*(.+)$", row[0])
             self.studiengang = (match.group(1) if match else row[0]).strip()
         if len(row) < 9 or not re.fullmatch(r"\d+", row[0] or ""):
-            return  # Kopfzeile, Ueberschrift o. ae.
+            return  # Kopfzeile, Überschrift o. ae.
         if row[2] in ART_CODES:
             self._add_exam(row)
         else:
@@ -72,8 +72,8 @@ class NotenspiegelParser:
     def _add_exam(self, row: list[str]) -> None:
         padded = row + [""] * (len(EXAM_FIELDS) - len(row))
         exam = dict(zip(EXAM_FIELDS, padded, strict=False))
-        # Der Notenspiegel listet PL-Zeilen in zwei Bloecken (Zusammenfassung +
-        # Detailplan): exakte Doubletten ueberspringen, echte Mehrfachversuche
+        # Der Notenspiegel listet PL-Zeilen in zwei Blöcken (Zusammenfassung +
+        # Detailplan): exakte Doubletten überspringen, echte Mehrfachversuche
         # behalten.
         signature = tuple(exam.values())
         if signature not in self.seen_pruefungen:

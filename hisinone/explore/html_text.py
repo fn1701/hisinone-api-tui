@@ -22,7 +22,7 @@ def page_title(html: str) -> str:
 
 
 def link_name(label: str) -> str:
-    """Linkname ohne Markierungen und Screenreader-Zusaetze."""
+    """Linkname ohne Markierungen und Screenreader-Zusätze."""
     label = re.sub(r"^\[(permalink|iframe)\]\s*", "", label)
     for noise in ("Sie befinden sich hier:", "Zur nächsten Navigationsebene"):
         label = label.replace(noise, "")

@@ -1,5 +1,5 @@
 """Mittlere Schicht der App: Login und Seiten laden (im Hintergrund-Thread,
-damit die Oberflaeche nicht haengt), Seiten mit Baum-Tabelle als Tabellen."""
+damit die Oberfläche nicht hängt), Seiten mit Baum-Tabelle als Tabellen."""
 
 import time
 from urllib.parse import urlsplit
@@ -93,7 +93,7 @@ class LoadingApp(SpecialPages, TableDisplay, LinkTreeApp):
         page, tables = cached
         self.call_from_thread(self.enter_page, page, push)
         if self.call_from_thread(self.show_special, page):
-            pass  # alte Planer-Eintraege haben noch Tabellen
+            pass  # alte Planer-Einträge haben noch Tabellen
         elif tables:
             loaded = LoadedTables(page, tables, None, open_col or config.open_table)
             self.call_from_thread(self.show_tree_tables, loaded)
@@ -122,7 +122,7 @@ class LoadingApp(SpecialPages, TableDisplay, LinkTreeApp):
 
     def _page_config(self, page: CurrentPage) -> PageConfig:
         """Ansicht je Seite aus der Config; neu erkannt: reine Navigations-
-        Baeume (nur Ebene/Titel/Aktionen) -> "tree" = nur als Links."""
+        Bäume (nur Ebene/Titel/Aktionen) -> "tree" = nur als Links."""
         view = "table" if has_data_tables(page.html) else "tree"
         expand = can_expand(page.html)
         return self.call_from_thread(self.learn_page, page, view, expand)
@@ -133,7 +133,7 @@ class LoadingApp(SpecialPages, TableDisplay, LinkTreeApp):
         return config
 
     def _load_tables(self, page: CurrentPage, open_col: str, expand: bool) -> list[TreeTable]:
-        """Wenn moeglich einmal "Alle aufklappen" (wie ein Klick im Browser)."""
+        """Wenn möglich einmal "Alle aufklappen" (wie ein Klick im Browser)."""
         try:
             tables, html = load_tables(self.session, page.server_url, page.html,
                                        self.client.timeout, expand)  # fmt: skip

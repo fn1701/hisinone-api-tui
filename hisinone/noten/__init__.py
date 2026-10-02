@@ -1,6 +1,6 @@
 """Notenspiegel einer HISinOne/QIS-Installation als dict/JSON.
 
-Oeffentliche API (auch ueber das Modul hisinone_noten erreichbar):
+Öffentliche API (auch über das Modul hisinone_noten erreichbar):
     HISinOneClient, HISinOneError, HISinOneAuthError, parse_notenspiegel, load_env
 """
 

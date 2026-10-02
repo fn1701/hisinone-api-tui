@@ -1,25 +1,25 @@
-"""Tabellen einer Detailseite (z.B. "Veranstaltungen und Pruefungen") als
+"""Tabellen einer Detailseite (z.B. "Veranstaltungen und Prüfungen") als
 Markdown-Tabellen. In Baum-Tabellen sind Zellen ohne Text nur Symbole und
 fallen weg; der Detail-Link einer Zeile wird zum anklickbaren ◆, Kopfzeilen
-bleiben reiner Text (ohne Sortier-Knoepfe)."""
+bleiben reiner Text (ohne Sortier-Knöpfe)."""
 
 import re
 
 from .html_text import attribute, text_of
 
-# innerste Tabellen (die aeussere ist nur ein Rahmen ohne Kopfzeile)
+# innerste Tabellen (die äußere ist nur ein Rahmen ohne Kopfzeile)
 INNER_TABLE = re.compile(r"<table\b(?:(?!<table\b).)*?</table>", re.S)
 ROW = re.compile(r"<tr\b.*?</tr>", re.S)
 CELL = re.compile(r"<t([hd])\b[^>]*>(.*?)</t\1>", re.S)
 LINK = re.compile(r'<a\b[^>]*\bhref="[^"#][^"]*"[^>]*>')  # ohne "#" (nur Skript)
 SORT_HINT = re.compile(r"\s*(\[Sortierbare Spalte\]|(Auf|Ab)w\u00e4rts sortieren)")
-LIST_END = re.compile(r"</li>")  # Aufzaehlung in einer Zelle: mit Komma
+LIST_END = re.compile(r"</li>")  # Aufzählung in einer Zelle: mit Komma
 LINK_MARK = "◆"
 
 
 def replace_tables(fragment: str, tables: list[str]) -> str:
     """Ersetzt jede Tabelle mit Kopfzeile durch einen Platzhalter
-    (\\x00Nummer\\x00) und haengt ihr Markdown an tables an."""
+    (\\x00Nummer\\x00) und hängt ihr Markdown an tables an."""
     while match := _next_table(fragment):
         tables.append(table_markdown(match.group(0)))
         marker = f"\n\n\x00{len(tables) - 1}\x00\n\n"

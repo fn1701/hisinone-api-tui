@@ -1,4 +1,4 @@
-"""Einfache .env laden (ohne Zusatzabhaengigkeit)."""
+"""Einfache .env laden (ohne Zusatzabhängigkeit)."""
 
 import os
 from pathlib import Path
@@ -9,7 +9,7 @@ DEFAULT_ENV_PATH = Path(__file__).resolve().parents[2] / ".env"
 
 def load_env(path: str | os.PathLike | None = None) -> None:
     """Liest eine einfache ``KEY=VALUE``-.env in ``os.environ`` (setdefault).
-    Kommentare (#) und Leerzeilen werden ignoriert, Anfuehrungszeichen
+    Kommentare (#) und Leerzeilen werden ignoriert, Anführungszeichen
     entfernt. Fehlt die Datei, passiert nichts."""
     env_file = Path(path) if path else DEFAULT_ENV_PATH
     if not env_file.exists():

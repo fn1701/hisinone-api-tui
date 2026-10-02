@@ -1,8 +1,8 @@
 """Links einer Seite finden und stabile URLs bilden.
 
-Der ``_flowExecutionKey`` (z. B. ``e4s1``) gilt nur fuer den gerade laufenden
+Der ``_flowExecutionKey`` (z. B. ``e4s1``) gilt nur für den gerade laufenden
 Flow. Aus Links mit ``_flowId`` wird er entfernt - die starten den Flow damit
-einfach neu. Links ohne ``_flowId`` gehoeren zu einem laufenden Flow, behalten
+einfach neu. Links ohne ``_flowId`` gehören zu einem laufenden Flow, behalten
 ihren Key und gelten als flow-gebunden (keine stabile URL).
 """
 
@@ -37,7 +37,7 @@ class Link:
 
     @property
     def needs_confirm(self) -> bool:
-        """Nur mit "!" oeffnen (nicht stabil / Abmelden)."""
+        """Nur mit "!" öffnen (nicht stabil / Abmelden)."""
         return self.flow_bound or self.is_logout
 
     @property
@@ -46,7 +46,7 @@ class Link:
 
 
 def clean_url(url: str) -> str:
-    """Entfernt fluechtige Parameter (_flowExecutionKey) und den Standard-Port
+    """Entfernt flüchtige Parameter (_flowExecutionKey) und den Standard-Port
     (Permalinks enthalten z. B. ``campus.example.org:443``) aus der URL."""
     parts = urlsplit(url)
     query = [(key, value) for key, value in parse_qsl(parts.query, keep_blank_values=True)
@@ -66,7 +66,7 @@ def extract_links(html: str, base: str, sort: bool = False) -> list[Link]:
 
 
 class LinkCollector:
-    """Sammelt Links einer Seite, je URL einer (mit der laengsten Beschriftung)."""
+    """Sammelt Links einer Seite, je URL einer (mit der längsten Beschriftung)."""
 
     def __init__(self, base: str):
         self.base = base
@@ -106,15 +106,15 @@ class LinkCollector:
         if path.lower().endswith(SKIP_EXT):
             return
         label = label or path.rsplit("/", 1)[-1] or url
-        # Bei Doubletten die laengere (aussagekraeftigere) Beschriftung behalten
+        # Bei Doubletten die längere (aussagekräftigere) Beschriftung behalten
         known = self.found.get(url)
         if known is None or len(label) > len(known.label):
             self.found[url] = Link(label, url, flow_bound)
 
 
 def match_links(links: list[Link], query: str, regex: bool) -> list[Link]:
-    """Links, deren Beschriftung oder URL passt (Text oder regulaerer
-    Ausdruck, Gross-/Kleinschreibung egal); re.error bei ungueltigem."""
+    """Links, deren Beschriftung oder URL passt (Text oder regulärer
+    Ausdruck, Groß-/Kleinschreibung egal); re.error bei ungültigem."""
     if not query:
         return links
     if regex:

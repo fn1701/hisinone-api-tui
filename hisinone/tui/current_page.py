@@ -12,7 +12,7 @@ from hisinone.explore.table_model import TreeTable
 
 @dataclass
 class CurrentPage:
-    stable_url: str = ""  # ohne fluechtige Parameter, Schluessel in der Config
+    stable_url: str = ""  # ohne flüchtige Parameter, Schlüssel in der Config
     name: str = ""
     server_url: str = ""  # wie vom Server geliefert
     html: str = ""
@@ -21,7 +21,7 @@ class CurrentPage:
     from_cache: bool = False
 
     def title_with_time(self) -> str:
-        """Name plus Abrufzeitpunkt fuer Titelzeilen."""
+        """Name plus Abrufzeitpunkt für Titelzeilen."""
         if not self.pulled_at:
             return self.name
         source = "Cache" if self.from_cache else "Stand"
@@ -30,7 +30,7 @@ class CurrentPage:
 
 @dataclass
 class LoadedTables:
-    page: CurrentPage  # Seite, zu der die Tabellen gehoeren
+    page: CurrentPage  # Seite, zu der die Tabellen gehören
     tables: list[TreeTable]
     expanded_html: str | None  # Ajax-Antwort von "Alle aufklappen", sonst None
     open_col: str  # diese Tabelle (Spalte oder Name) gleich im Vollbild

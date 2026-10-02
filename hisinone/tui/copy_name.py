@@ -11,7 +11,7 @@ COPY_MARK = "⧉ "
 
 
 def copy_text(app: App, text: str) -> None:
-    """Externes Tool (wl-copy/xclip) bevorzugt, sonst OSC 52 ueber das Terminal."""
+    """Externes Tool (wl-copy/xclip) bevorzugt, sonst OSC 52 über das Terminal."""
     tool = copy_external(text)
     if not tool:
         app.copy_to_clipboard(text)

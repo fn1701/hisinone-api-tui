@@ -47,23 +47,23 @@ class QisNotenspiegel:
         )
 
     def _sso_token(self) -> str:
-        """SSO-Bruecke: der Location-Header enthaelt einen Einmal-Token."""
+        """SSO-Brücke: der Location-Header enthält einen Einmal-Token."""
         bridge = self.session.get(
             self.client.qis_base + SSO_BRIDGE, timeout=self.client.timeout, allow_redirects=False
         )
         token = re.search(r"token=([^&]+)", bridge.headers.get("Location", ""))
         if not token:
-            raise HISinOneError(f"SSO-Bruecke lieferte keinen Token (HTTP {bridge.status_code}).")
+            raise HISinOneError(f"SSO-Brücke lieferte keinen Token (HTTP {bridge.status_code}).")
         return token.group(1)
 
     def _redeem_token(self, token: str) -> None:
-        # Nur den Token uebernehmen, nicht den re=-Anhang aus dem Location-
-        # Header (doppeltes type=8 wuerde den Token-Login aushebeln)
+        # Nur den Token übernehmen, nicht den re=-Anhang aus dem Location-
+        # Header (doppeltes type=8 würde den Token-Login aushebeln)
         home = f"{self.client.base_url}/"
         self._get(f"{self.icms}/rds?state=user&type=1&token={token}", home)
 
     def _find_asi(self) -> str:
-        """Anwendungs-Session-Id aus Portal + POS-Menue."""
+        """Anwendungs-Session-Id aus Portal + POS-Menü."""
         home = f"{self.client.base_url}/"
         portal = self._get(self.icms + PORTAL, home)
         menu = self._get(self.icms + POS_MENU, self.icms + PORTAL)
@@ -72,7 +72,7 @@ class QisNotenspiegel:
             r"state=notenspiegelStudent[^\"']*asi=([0-9A-Za-z]{6,})", text
         ) or re.search(r"asi=([0-9A-Za-z]{6,})", text)
         if not match:
-            raise HISinOneError("Keine asi nach SSO-Login (Token-Einloesung fehlgeschlagen?).")
+            raise HISinOneError("Keine asi nach SSO-Login (Token-Einlösung fehlgeschlagen?).")
         return match.group(1)
 
     def _fetch_list(self, asi: str) -> str:
@@ -91,4 +91,4 @@ class QisNotenspiegel:
         lower = page.text.lower()
         if "notenspiegel" in lower or "<table" in lower:
             return page.text
-        raise HISinOneError("Notenspiegel-Seite unerwartet leer/ungueltig.")
+        raise HISinOneError("Notenspiegel-Seite unerwartet leer/ungültig.")

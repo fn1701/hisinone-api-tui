@@ -1,4 +1,4 @@
-"""Alle Baum-Tabellen einer Seite auf einem Bildschirm (Esc = zurueck)."""
+"""Alle Baum-Tabellen einer Seite auf einem Bildschirm (Esc = zurück)."""
 
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -15,9 +15,9 @@ from .table_widgets import TABLES_CSS, TableBar, fill_table
 
 
 class TreeTablesScreen(Screen):
-    """Ueber jeder Tabelle eine Titelleiste: Klick oder f = Tabelle im Vollbild."""
+    """Über jeder Tabelle eine Titelleiste: Klick oder f = Tabelle im Vollbild."""
 
-    BINDINGS = [Binding("escape", "back", "Zurueck"), Binding("f", "fullscreen", "Vollbild")]
+    BINDINGS = [Binding("escape", "back", "Zurück"), Binding("f", "fullscreen", "Vollbild")]
     CSS = "TreeTablesScreen DataTable { height: auto; }" + TABLES_CSS
 
     def __init__(self, page_name: str, tables: list[TreeTable], prefs: dict[str, TablePrefs]):
@@ -63,7 +63,7 @@ class TreeTablesScreen(Screen):
 
 
 def tables_screen(page_name: str, tables: list[TreeTable], prefs: dict[str, TablePrefs]) -> Screen:
-    """Eine Tabelle gleich im Vollbild (Auf/Zu, Filter), mehrere als Uebersicht."""
+    """Eine Tabelle gleich im Vollbild (Auf/Zu, Filter), mehrere als Übersicht."""
     if len(tables) == 1:
         return SingleTableScreen(page_name, tables[0], prefs)
     return TreeTablesScreen(page_name, tables, prefs)

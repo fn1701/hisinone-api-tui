@@ -5,7 +5,7 @@ from textual.widgets import Checkbox, Input
 
 
 class LinkFilter:
-    """Mixin fuer LinkTreeApp (nutzt page, rebuild, link_tree, settings)."""
+    """Mixin für LinkTreeApp (nutzt page, rebuild, link_tree, settings)."""
 
     @on(Input.Changed, "#filter")
     def filter_changed(self) -> None:

@@ -1,4 +1,4 @@
-"""Anzeige-Zustand einer Tabelle im Vollbild (ohne Oberflaeche)."""
+"""Anzeige-Zustand einer Tabelle im Vollbild (ohne Oberfläche)."""
 
 from hisinone.explore.exams import latest_attempts_tree
 from hisinone.explore.table_model import Row, TreeTable
@@ -15,7 +15,7 @@ class TableViewState:
 
     def __init__(self, table: TreeTable, page_prefs: dict[str, TablePrefs]):
         self.table = table
-        self.page_prefs = page_prefs  # Objekt aus Settings, wird direkt geaendert
+        self.page_prefs = page_prefs  # Objekt aus Settings, wird direkt geändert
         prefs = page_prefs.get(table.prefs_key, TablePrefs())
         known = table.cols + table.custom
         chosen = prefs.cols if prefs.cols is not None else known
@@ -65,7 +65,7 @@ class TableViewState:
         """Sichtbare Zeilen der Ansicht (TABLE_VIEWS); mit Filter die Treffer
         samt Eltern (eigener Auf-/Zu-Zustand), in der Liste nur die Treffer.
         "tree": alle Zeilen, das Auf-/Zuklappen macht das Baum-Widget.
-        regex: re.error bei ungueltigem Ausdruck."""
+        regex: re.error bei ungültigem Ausdruck."""
         if (self.filter, regex, view) != self._last_query:
             self.col_widths.clear()
             self.filter_fold = TreeFold(set())
@@ -88,7 +88,7 @@ class TableViewState:
 
     def _flat(self, rows: list[Row], regex: bool) -> list[ShownRow]:
         """Alle Zeilen bzw. nur die Treffer (ohne Eltern); Markierung "" =
-        nicht einruecken."""
+        nicht einrücken."""
         if self.filter.strip():
             rows = filter_tree(rows, self.filter_cols(), self.filter, regex, parents=False)
         return [ShownRow(row, "", "") for row in rows]
@@ -117,7 +117,7 @@ class TableViewState:
 
     def remember(self) -> None:
         """In die Seiten-Einstellungen schreiben; den Standardzustand nicht
-        (blosses Oeffnen ist keine Aenderung)."""
+        (bloßes Öffnen ist keine Änderung)."""
         self.latest = self.latest and self.can_latest
         folded = sorted(self.fold.folded) if self.fold_changed else None
         prefs = TablePrefs(self.col_choice, self.custom_on, self.latest, self.filter, folded,

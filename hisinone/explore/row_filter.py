@@ -1,5 +1,5 @@
-"""Zeilenfilter fuer Tabellen: "Text" oder "Spalte=Wert", mehrere mit
-Leerzeichen (alle muessen passen, Gross-/Kleinschreibung egal). Gefiltert
+"""Zeilenfilter für Tabellen: "Text" oder "Spalte=Wert", mehrere mit
+Leerzeichen (alle müssen passen, Groß-/Kleinschreibung egal). Gefiltert
 wird lokal auf den schon geladenen Zeilen."""
 
 import shlex
@@ -10,7 +10,7 @@ from .table_model import Row
 def _terms(query: str) -> list[str]:
     try:
         return shlex.split(query)
-    except ValueError:  # offenes Anfuehrungszeichen beim Tippen
+    except ValueError:  # offenes Anführungszeichen beim Tippen
         return query.replace('"', " ").split()
 
 
@@ -35,13 +35,13 @@ def _matches(row: Row, checks: list[tuple[list[str], str]]) -> bool:
 
 def match_rows(rows: list[Row], cols: list[str], query: str) -> list[Row]:
     """ "Spalte=Wert" sucht nur in dieser Spalte, sonst in allen. Werte mit
-    Leerzeichen in Anfuehrungszeichen."""
+    Leerzeichen in Anführungszeichen."""
     checks = parse_checks(cols, query)
     return [row for row in rows if _matches(row, checks)]
 
 
 def filter_suggestions(rows: list[Row], cols: list[str], max_values: int = 40) -> list[str]:
-    """Vorschlaege "Spalte=Wert" fuer Spalten mit wenigen verschiedenen Werten."""
+    """Vorschläge "Spalte=Wert" für Spalten mit wenigen verschiedenen Werten."""
     suggestions = []
     for col in cols:
         values = sorted({str(row.get(col, "")) for row in rows} - {""})

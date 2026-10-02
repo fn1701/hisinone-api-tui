@@ -28,7 +28,7 @@ def main(argv: list[str] | None = None) -> int:
     text = json.dumps(data, ensure_ascii=False, indent=None if args.compact else 2)
     if args.output:
         Path(args.output).write_text(text + "\n", encoding="utf-8")
-        print(f"{len(data['pruefungen'])} Pruefungen -> {args.output}", file=sys.stderr)
+        print(f"{len(data['pruefungen'])} Prüfungen -> {args.output}", file=sys.stderr)
     else:
         print(text)
     return 0

@@ -25,13 +25,13 @@ from .planner_screen import PlannerScreen
 
 
 class PlannerLoading:
-    """Mixin fuer LoadingApp (nutzt session, client, store, _get, save_expanded)."""
+    """Mixin für LoadingApp (nutzt session, client, store, _get, save_expanded)."""
 
-    planner_choices: dict[str, PlannerChoice]  # stabile URL -> zuletzt gewaehlt
+    planner_choices: dict[str, PlannerChoice]  # stabile URL -> zuletzt gewählt
 
     def show_planner(self, page: CurrentPage) -> None:
         """Planer-Seite; gleich laden, wenn der Studiengang klar ist (nur
-        einer oder schon einmal gewaehlt)."""
+        einer oder schon einmal gewählt)."""
         choice = self.planner_choices.get(page.stable_url) or _page_choice(page)
         self.planner_screen = PlannerScreen(page, choice)
         self.push_screen(self.planner_screen)
@@ -59,10 +59,10 @@ class PlannerLoading:
         if not result:
             self.call_from_thread(self._planner_loaded, dialog, page, [], None, None)
             return
-        shown, tables, html, used = result  # used: ggf. auf die Seite zurueckgesetzt
+        shown, tables, html, used = result  # used: ggf. auf die Seite zurückgesetzt
         self.planner_choices[page.stable_url] = used
         # unter der angefragten Wahl (vor den Filtern) und der geladenen (nach
-        # den Filtern): ein Neustart findet den Stand mit beiden Schluesseln
+        # den Filtern): ein Neustart findet den Stand mit beiden Schlüsseln
         for key in {choice.cache_key(page.stable_url), used.cache_key(page.stable_url)}:
             self.store.put_tables(key, shown, tables, time.monotonic() - started)
         refreshed = self._refresh_planner_page(shown, dialog)
@@ -80,7 +80,7 @@ class PlannerLoading:
                 if not (page := self._fresh_page(page, progress)):
                     return None
             if not _has_filters(page, choice):
-                self.call_from_thread(self.notify, "Filter nicht verfuegbar - Standard geladen.",
+                self.call_from_thread(self.notify, "Filter nicht verfügbar - Standard geladen.",
                                       severity="warning")  # fmt: skip
                 choice = _page_choice(page, choice.course)
             tables, html = self._click_through(page, choice, progress)
@@ -106,7 +106,7 @@ class PlannerLoading:
 
     def _refresh_planner_page(self, page: CurrentPage, dialog: LoadingDialog):
         """Seite nach der Wahl des Studiengangs: erst jetzt stehen alle Filter
-        darin (z.B. Studiensemester); fuer die Zwischenseite und den Cache."""
+        darin (z.B. Studiensemester); für die Zwischenseite und den Cache."""
         progress = functools.partial(self.call_from_thread, dialog.step)
         refreshed = self._fresh_page(page, progress)
         if refreshed:
@@ -126,15 +126,15 @@ class PlannerLoading:
 
 
 def _has_filters(page: CurrentPage, choice: PlannerChoice) -> bool:
-    """Steht jeder gewaehlte Filter in der Seite? (Studiensemester erst, wenn
-    in dieser Sitzung ein Studiengang gewaehlt ist; sonst ignoriert ihn der
-    Server und der Cache-Eintrag luegt.)"""
+    """Steht jeder gewählte Filter in der Seite? (Studiensemester erst, wenn
+    in dieser Sitzung ein Studiengang gewählt ist; sonst ignoriert ihn der
+    Server und der Cache-Eintrag lügt.)"""
     return set(choice.filters) <= {field.name for field in parse_filters(page.html)}
 
 
 def _page_choice(page: CurrentPage, course: str = "") -> PlannerChoice:
     """Ohne gemerkte Wahl (z.B. nach Neustart): die Werte, die die Seite selbst
-    zeigt - sonst stuende in den Listen etwas anderes als geladen wird."""
+    zeigt - sonst stünde in den Listen etwas anderes als geladen wird."""
     filters = {field.name: field.current for field in parse_filters(page.html)}
     courses = parse_courses(page.html)
     return PlannerChoice(course or (courses[0].label if courses else ""), filters)

@@ -1,7 +1,7 @@
 """Baum-Tabellen (``treeTableWithIcons``) parsen.
 
 Leistungen, Vorlesungsverzeichnis usw. nutzen dasselbe Markup. Spalten werden
-ueber colspan den Kopfzeilen zugeordnet (der Titel-Kopf ueberspannt z.B. auch
+über colspan den Kopfzeilen zugeordnet (der Titel-Kopf überspannt z.B. auch
 die Auf-/Zuklapp-Symbole).
 """
 
@@ -29,7 +29,7 @@ def parse_tree_tables(html: str) -> list[TreeTable]:
     ends = [*starts[1:], len(html)]
     tables = []
     for index, (start, end) in enumerate(zip(starts, ends, strict=True)):
-        # Name = letzte Ueberschrift zwischen voriger Tabelle und dieser
+        # Name = letzte Überschrift zwischen voriger Tabelle und dieser
         previous = starts[index - 1] if index else 0
         table = _parse_table(html[start:end], _last_heading(html[previous:start]))
         if table.rows:

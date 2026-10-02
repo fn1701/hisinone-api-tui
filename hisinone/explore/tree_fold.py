@@ -1,7 +1,7 @@
-"""Auf-/Zuklappen in einer Baum-Tabelle (ohne Oberflaeche).
+"""Auf-/Zuklappen in einer Baum-Tabelle (ohne Oberfläche).
 
-Ein Knoten wird ueber seinen Titelpfad "Eltern › Kind" erkannt, damit der
-Zustand ein Neuladen der Seite und das Speichern in der Config uebersteht.
+Ein Knoten wird über seinen Titelpfad "Eltern › Kind" erkannt, damit der
+Zustand ein Neuladen der Seite und das Speichern in der Config übersteht.
 """
 
 from dataclasses import dataclass, field
@@ -14,7 +14,7 @@ MARK_CLOSED, MARK_OPEN, MARK_LEAF = "▶ ", "▼ ", "  "
 
 @dataclass
 class ShownRow:
-    """Sichtbare Zeile mit Pfad und Markierung fuer die Titelspalte."""
+    """Sichtbare Zeile mit Pfad und Markierung für die Titelspalte."""
 
     row: Row
     key: str

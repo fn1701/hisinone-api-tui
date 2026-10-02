@@ -1,9 +1,9 @@
 """Detailansicht (Formular ``detailViewData``, z.B. Modulbeschreibung aus dem
-Studienplaner) als Abschnitte lesen: Ueberschrift (``<legend>``, Ebene nach
+Studienplaner) als Abschnitte lesen: Überschrift (``<legend>``, Ebene nach
 Verschachtelung der Fieldsets), Felder "Bezeichnung: Wert" und Freitext.
 
 Nur die gerade aktive Registerkarte steht in der Seite; die anderen sind
-Formular-Knoepfe ohne eigene URL und werden daher nicht gezeigt.
+Formular-Knöpfe ohne eigene URL und werden daher nicht gezeigt.
 """
 
 import html as htmlmod
@@ -18,14 +18,14 @@ LEGEND = re.compile(r"<legend\b[^>]*>(.*?)</legend>", re.S)
 FIELDSET = re.compile(r"<(/?)fieldset\b")
 FIELD = re.compile(r'<label\b[^>]*class="labelWithBG[^"]*"[^>]*>(.*?)</label>\s*'
                    r'<div\b[^>]*class="answer[^"]*"[^>]*>(.*?)</div>', re.S)  # fmt: skip
-# Kein Inhalt: Ueberschriften (doppelt zur legend), Knoepfe, Skripte
+# Kein Inhalt: Überschriften (doppelt zur legend), Knöpfe, Skripte
 NOISE = re.compile(r"<(h\d|button|script|legend)\b.*?</\1>", re.S)
 LINE_END = re.compile(r"<br\b[^>]*>|</(p|li|div|tr)>", re.I)
 
 
 @dataclass
 class DetailSection:
-    """Ein Abschnitt: Ueberschrift, Ebene (1 = oberste), Felder, Freitext."""
+    """Ein Abschnitt: Überschrift, Ebene (1 = oberste), Felder, Freitext."""
 
     title: str
     level: int
@@ -39,7 +39,7 @@ def has_detail_view(html: str) -> bool:
 
 def parse_detail(html: str) -> list[DetailSection]:
     """Abschnitte der aktiven Registerkarte; leere Rahmen-Abschnitte bleiben
-    als Ueberschrift fuer ihre Unterabschnitte."""
+    als Überschrift für ihre Unterabschnitte."""
     start = FORM_START.search(html)
     if not start:
         return []
@@ -69,8 +69,8 @@ def _section(title: str, level: int, fragment: str) -> DetailSection:
 
 
 def block_text(fragment: str) -> str:
-    """Text mit Zeilenumbruechen (<br>, Absaetze), Leerraum je Zeile
-    zusammengefasst, hoechstens eine Leerzeile am Stueck."""
+    """Text mit Zeilenumbrüchen (<br>, Absätze), Leerraum je Zeile
+    zusammengefasst, höchstens eine Leerzeile am Stück."""
     fragment = LINE_END.sub("\n", NOISE.sub("", fragment))
     plain = htmlmod.unescape(re.sub(r"<[^>]+>", " ", fragment))
     lines = [re.sub(r"[ \t\xa0]+", " ", line).strip() for line in plain.split("\n")]

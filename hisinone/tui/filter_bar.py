@@ -1,12 +1,12 @@
-"""Filterfeld mit Schalter "Regex" (global fuer alle Seiten, in der Config)."""
+"""Filterfeld mit Schalter "Regex" (global für alle Seiten, in der Config)."""
 
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Horizontal
 from textual.widgets import Checkbox, Input
 
-REGEX_HINT = ("Regex (Python, Gross/klein egal), z.B. Bestanden = enthaelt, "
-              "^(?!.*Bestanden) = enthaelt nicht")  # fmt: skip
+REGEX_HINT = ("Regex (Python, Groß/klein egal), z.B. Bestanden = enthält, "
+              "^(?!.*Bestanden) = enthält nicht")  # fmt: skip
 
 
 class FilterBar(Horizontal):
@@ -37,5 +37,5 @@ class FilterBar(Horizontal):
         self.query_one(Input).placeholder = self._hint(event.value)
 
     def mark_invalid(self, invalid: bool) -> None:
-        """Ungueltiger Ausdruck: Feld rot, Ergebnis bleibt das alte."""
+        """Ungültiger Ausdruck: Feld rot, Ergebnis bleibt das alte."""
         self.query_one(Input).set_class(invalid, "-invalid")

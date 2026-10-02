@@ -24,7 +24,7 @@ DEFAULT_UA = (
 START_PAGE = "/pages/cs/sys/portal/hisinoneStartPage.faces"
 LOGIN_ACTION = "/rds?state=user&type=1&category=auth.login"
 
-# (Umgebungsvariable, Konstruktor-Parameter, Standardwert) fuer from_env
+# (Umgebungsvariable, Konstruktor-Parameter, Standardwert) für from_env
 ENV_SETTINGS = [
     ("HISINONE_USERNAME", "username", ""),
     ("HISINONE_PASSWORD", "password", ""),
@@ -36,7 +36,7 @@ ENV_SETTINGS = [
 
 
 def _no_pause() -> None:
-    """Standard fuer login(): zwischen den Schritten nicht warten."""
+    """Standard für login(): zwischen den Schritten nicht warten."""
 
 
 class HISinOneClient:
@@ -53,7 +53,7 @@ class HISinOneClient:
         timeout: int = 25,
     ):
         if not username or not password:
-            raise HISinOneError("Benutzername/Passwort fehlen (.env pruefen).")
+            raise HISinOneError("Benutzername/Passwort fehlen (.env prüfen).")
         self.username = username
         self.password = password
         self.base_url = base_url.rstrip("/")
@@ -93,7 +93,7 @@ class HISinOneClient:
         self, session: requests.Session, pause: Callable[[], None] = _no_pause
     ) -> requests.Response:
         """Login im modernen HISinOne: Startseite (ajax-token + Cookie), dann
-        Formular absenden. pause() laeuft vor jedem Schritt (Explorer: Pacer).
+        Formular absenden. pause() läuft vor jedem Schritt (Explorer: Pacer).
         Falsche Zugangsdaten -> HISinOneAuthError."""
         pause()
         start = session.get(self.qis_base + START_PAGE, timeout=self.timeout)
@@ -116,7 +116,7 @@ class HISinOneClient:
 
     def _fetch_once(self) -> str:
         # Nur EIN SSO-Handoff pro Login: schnelles Nachfassen verwirrt die
-        # QIS-Session eher. Wiederholt wird aussen mit frischer Session.
+        # QIS-Session eher. Wiederholt wird außen mit frischer Session.
         session = self.new_session()
         self.login(session)
         return QisNotenspiegel(self, session).fetch()
@@ -132,10 +132,10 @@ class HISinOneClient:
                 return self._fetch_once()
             except HISinOneAuthError:
                 raise  # falsche Zugangsdaten -> sofort abbrechen, kein Retry
-            except Exception as error:  # noqa: BLE001 - bewusst breit fuer Retry
+            except Exception as error:  # noqa: BLE001 - bewusst breit für Retry
                 last = error
                 if attempt < attempts:
-                    time.sleep(3 * attempt)  # 3s, 6s, ... Abstand statt Haemmern
+                    time.sleep(3 * attempt)  # 3s, 6s, ... Abstand statt Hämmern
         raise HISinOneError(
             f"Notenspiegel konnte nach {attempts} Versuchen nicht geladen werden "
             f"({last}). Das QIS-Portal hat gerade eine leere Seite geliefert - "
@@ -143,5 +143,5 @@ class HISinOneClient:
         )
 
     def get_grades(self, attempts: int = 3) -> dict:
-        """Ruft den Notenspiegel ab und gibt ihn als strukturiertes dict zurueck."""
+        """Ruft den Notenspiegel ab und gibt ihn als strukturiertes dict zurück."""
         return parse_notenspiegel(self.fetch_notenspiegel_html(attempts=attempts))

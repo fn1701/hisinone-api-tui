@@ -1,6 +1,6 @@
 """Leistungen (Mein Studium > Leistungen).
 
-Die Seite ist JSF: die Tabelle ist ein Baum, der nur ueber Buttons
+Die Seite ist JSF: die Tabelle ist ein Baum, der nur über Buttons
 (jsf.ajax POST) aufklappt. Ablauf = 2 Requests: Seite laden (neuer Flow),
 dann einmal "Alle aufklappen" wie im Browser.
 """
@@ -31,7 +31,7 @@ LEISTUNGEN_COLS = ["Freigabedatum", "Nummer", "Versuch", "Rücktritt", "Bewertun
 def parse_leistungen(html: str) -> list[Row]:
     """Zeilen des Leistungs-Baums: {ebene, tiefe (ab 1), typ, titel, art,
     <Spalten>}. Die Tabelle mit Spalte "Versuch" (der Studienverlauf-Baum
-    auf derselben Seite wird uebergangen)."""
+    auf derselben Seite wird übergangen)."""
     table = next((t for t in parse_tree_tables(html) if "Versuch" in t.cols), None)
     return _leistungen_rows(table) if table else []
 
@@ -48,7 +48,7 @@ def _leistungen_rows(table: TreeTable) -> list[Row]:
 
 
 def fetch_leistungen(session: requests.Session, client: HISinOneClient) -> tuple[list[Row], str]:
-    """Laedt die Leistungen komplett aufgeklappt (2 Requests).
+    """Lädt die Leistungen komplett aufgeklappt (2 Requests).
     Liefert (Zeilen, HTML des aufgeklappten Baums)."""
     page = get_page(session, client.qis_base + LEISTUNGEN_PATH, None, client.timeout)
     page.encoding = "utf-8"
@@ -65,7 +65,7 @@ def fetch_leistungen(session: requests.Session, client: HISinOneClient) -> tuple
 def filter_leistungen(
     rows: list[Row], exams_only: bool = False, latest_only: bool = False
 ) -> list[Row]:
-    """exams_only: nur PL/PVL. latest_only: fruehere Versuche ausblenden
+    """exams_only: nur PL/PVL. latest_only: frühere Versuche ausblenden
     (Regeln siehe earlier_attempts)."""
     drop: set[int] = set()
     if latest_only:

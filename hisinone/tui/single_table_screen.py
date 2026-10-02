@@ -1,5 +1,5 @@
 """Eine Tabelle im Vollbild: Zeilenfilter (/), Spalten (k), eigene Spalten (x),
-letzter Versuch (v), Ansicht Tabelle/Baum/Liste (t), Export (e), Zeile oeffnen
+letzter Versuch (v), Ansicht Tabelle/Baum/Liste (t), Export (e), Zeile öffnen
 (g, Browser o), Knoten auf/zu (Leertaste, +, -)."""
 
 import re
@@ -26,12 +26,12 @@ from .table_state import TableViewState
 from .table_views import VIEWS_CSS, TableViews
 from .table_widgets import TABLES_CSS, ClickTable, TableBar, fill_table
 
-FILTER_HINT = "Zeilen filtern: Text oder Spalte=Wert, mehrere mit Leerzeichen (↓ = Vorschlaege)"
+FILTER_HINT = "Zeilen filtern: Text oder Spalte=Wert, mehrere mit Leerzeichen (↓ = Vorschläge)"
 
 
 class SingleTableScreen(TableViews, TableColumns, TableExport, TableLinks, FilterScreen):
     BINDINGS = [
-        Binding("escape", "back", "Zurueck"),
+        Binding("escape", "back", "Zurück"),
         Binding("slash", "focus_filter", "Filter"),
         Binding("k", "columns", "Spalten"),
         Binding("x", "toggle_custom", "Eigene Spalten"),
@@ -57,7 +57,7 @@ class SingleTableScreen(TableViews, TableColumns, TableExport, TableLinks, Filte
     def suggestions(self) -> list[str]:
         return filter_suggestions(self.table.rows, self.state.filter_cols())
 
-    BAR_CLICKABLE = False  # Titelleiste oeffnet das Vollbild (open_single)
+    BAR_CLICKABLE = False  # Titelleiste öffnet das Vollbild (open_single)
 
     def column_name(self, index: int) -> str:
         return self.state.active_cols()[index]
@@ -70,7 +70,7 @@ class SingleTableScreen(TableViews, TableColumns, TableExport, TableLinks, Filte
         return True
 
     def compose_top(self) -> ComposeResult:
-        """Platz fuer Bedienelemente ueber dem Filter (Unterklassen)."""
+        """Platz für Bedienelemente über dem Filter (Unterklassen)."""
         yield from ()
 
     def compose(self) -> ComposeResult:
@@ -78,7 +78,7 @@ class SingleTableScreen(TableViews, TableColumns, TableExport, TableLinks, Filte
         yield from self.compose_top()
         yield FilterBar(self.state.filter, "rowfilter", FILTER_HINT)
         yield OptionList(id="suggest")
-        # ueber allen Ansichten; im Studienplaner klickbar (Vollbild)
+        # über allen Ansichten; im Studienplaner klickbar (Vollbild)
         yield TableBar(0, "", self.BAR_CLICKABLE)
         with VerticalScroll(id="tablescroll"):
             yield ClickTable(zebra_stripes=True, cursor_type="row")
@@ -99,12 +99,12 @@ class SingleTableScreen(TableViews, TableColumns, TableExport, TableLinks, Filte
         self.call_after_refresh(fit_tables, self)
 
     def refresh_table(self) -> None:
-        """Nach jeder Aenderung: merken, filtern, neu fuellen, Titel setzen."""
+        """Nach jeder Änderung: merken, filtern, neu füllen, Titel setzen."""
         self.state.filter = self.filter_input.value
         self.state.remember()
         try:
             self.shown = self.state.shown(self.view, self.app.settings.regex)
-        except re.error:  # Ausdruck noch unvollstaendig: altes Ergebnis lassen
+        except re.error:  # Ausdruck noch unvollständig: altes Ergebnis lassen
             self.query_one(FilterBar).mark_invalid(True)
             return
         self.query_one(FilterBar).mark_invalid(False)

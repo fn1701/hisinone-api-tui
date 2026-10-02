@@ -6,15 +6,15 @@ import time
 
 
 class Pacer:
-    """Kurze Zufallspause (200-1000 ms) zwischen Schritten, fuer die ein Mensch
-    im Browser klicken muesste (Seite -> Button -> naechste Seite ...).
+    """Kurze Zufallspause (200-1000 ms) zwischen Schritten, für die ein Mensch
+    im Browser klicken müsste (Seite -> Button -> nächste Seite ...).
     Requests innerhalb eines Seitenaufrufs (Redirects) werden nicht gebremst;
-    liegt der letzte Schritt schon laenger zurueck, wird nicht gewartet."""
+    liegt der letzte Schritt schon länger zurück, wird nicht gewartet."""
 
     def __init__(self, low: float = 0.2, high: float = 1.0):
         self.low, self.high = low, high
         self._last = 0.0
-        self._lock = threading.Lock()  # TUI laedt in Hintergrund-Threads
+        self._lock = threading.Lock()  # TUI lädt in Hintergrund-Threads
 
     def step(self) -> None:
         """Vor jedem "Klick" aufrufen."""
@@ -25,5 +25,5 @@ class Pacer:
             self._last = time.monotonic()
 
 
-# Eine gemeinsame Instanz fuer das ganze Programm (alle Requests an denselben Server)
+# Eine gemeinsame Instanz für das ganze Programm (alle Requests an denselben Server)
 pacer = Pacer()

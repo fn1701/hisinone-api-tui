@@ -1,4 +1,4 @@
-"""Zeilen als .json oder .csv exportieren (enthaelt ggf. Noten!)."""
+"""Zeilen als .json oder .csv exportieren (enthält ggf. Noten!)."""
 
 import csv
 import json
@@ -25,7 +25,7 @@ def export_rows(rows: list[Row], path: str | Path, cols: list[str]) -> Path:
 
 
 def _write_csv(path: Path, labels: list[str], data: list[dict[str, str]]) -> None:
-    # ";" + BOM: oeffnet in deutschem Excel/LibreOffice direkt richtig
+    # ";" + BOM: öffnet in deutschem Excel/LibreOffice direkt richtig
     with path.open("w", newline="", encoding="utf-8-sig") as file:
         writer = csv.DictWriter(file, fieldnames=labels, delimiter=";")
         writer.writeheader()

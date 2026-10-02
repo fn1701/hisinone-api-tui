@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-HISinOne-Explorer als Terminal-Oberflaeche (Textual): Links einer Seite als
-Baum, per Klick oder Enter oeffnen. Die Logik (Login, Links, Baum, stabile
+HISinOne-Explorer als Terminal-Oberfläche (Textual): Links einer Seite als
+Baum, per Klick oder Enter öffnen. Die Logik (Login, Links, Baum, stabile
 URLs, Speichern) liegt in hisinone/explore - siehe explore.py.
 
 Installation (einmalig, in die venv des Projekts):
@@ -19,15 +19,15 @@ Benutzung (aus dem Projekt-Hauptordner, .env wie bei login_test.py):
     python explore_tui.py --save DIR
 
 Bedienung:
-    Klick / Enter   Link oeffnen          Leertaste / Pfeile  auf-/zuklappen
-    !               flow-gebundenen oder Abmelde-Link trotzdem oeffnen
-    /               Filter (Esc = zurueck zur Liste)
-    b r h           zurueck / neu laden / Startseite
+    Klick / Enter   Link öffnen          Leertaste / Pfeile  auf-/zuklappen
+    !               flow-gebundenen oder Abmelde-Link trotzdem öffnen
+    /               Filter (Esc = zurück zur Liste)
+    b r h           zurück / neu laden / Startseite
     t a             Baum an/aus / alphabetisch an/aus
     c               URL (markierter Link, sonst Seite) in die Zwischenablage
     v               Seite mit Baum-Tabelle: Tabellen-Ansicht / nur Links umschalten
                     (gemerkt in der Config unter "pages")
-    o               URL im Browser oeffnen (neue Browser-Sitzung, ohne Login!)
+    o               URL im Browser öffnen (neue Browser-Sitzung, ohne Login!)
     s               Speichern an/aus (Ordner aus --save, sonst /tmp/hisinone-explore;
                     beim Einschalten wird die aktuelle Seite gleich gespeichert)
     l               Leistungen laden, Tabelle "Leistungsdaten" im Vollbild
@@ -35,12 +35,12 @@ Bedienung:
     q               beenden
 
 Tabellen: Seiten mit Daten-Baumtabelle (Leistungen, ...; reine Navigations-
-baeume wie das Vorlesungsverzeichnis bleiben Links)
-oeffnen zusaetzlich alle Tabellen auf einem Bildschirm (Esc = zurueck zu den
+bäume wie das Vorlesungsverzeichnis bleiben Links)
+öffnen zusätzlich alle Tabellen auf einem Bildschirm (Esc = zurück zu den
 Links). Gibt es genau einen "Alle aufklappen"-Button, wird er einmal geklickt
 (1 Request). Klick auf die Titelleiste oder f = Tabelle im Vollbild, dort:
     /               Zeilenfilter: Text oder Spalte=Wert, mehrere mit Leerzeichen
-                    (alle muessen passen); Klick/↓ = Vorschlagsliste
+                    (alle müssen passen); Klick/↓ = Vorschlagsliste
                     z.B. Art=PL, Art=PVL, Typ=Modul, Status=BE
     k               Spalten ein-/ausblenden (je Tabelle gemerkt)
     x               eigene Spalten an/aus (nur wenn es welche gibt, lila):
@@ -52,16 +52,16 @@ Einstellungen (Baum, alphabetisch, Speichern an/aus + Ordner, Shortcuts, je
 Seite mit Baum-Tabelle view/expand/open_table und je Tabelle Spalten/eigene
 Spalten/letzter Versuch/Filter, zugeklappte Knoten im Link-Baum je Seite -
 letztere werden nur beim Beenden geschrieben) stehen in
-~/.config/hisinone-explore/config.json (0600, enthaelt ggf. Filter mit
+~/.config/hisinone-explore/config.json (0600, enthält ggf. Filter mit
 Modulnamen). Gelesen beim Start; geschrieben beim Beenden und alle 100 s,
-aber nur wenn sich etwas geaendert hat. Angegebene Optionen (--flat, --sort,
+aber nur wenn sich etwas geändert hat. Angegebene Optionen (--flat, --sort,
 --save) gehen vor; --no-config schaltet die Datei ab.
 
-Zwischen Schritten, die im Browser ein Klick waeren, wird zufaellig
+Zwischen Schritten, die im Browser ein Klick wären, wird zufällig
 200-1000 ms gewartet (siehe hisinone/explore/pacer.py).
 """
 
-# Der Code liegt im Paket hisinone/tui (Oberflaeche) und hisinone/explore (Logik).
+# Der Code liegt im Paket hisinone/tui (Oberfläche) und hisinone/explore (Logik).
 from hisinone.tui.cli import main
 
 if __name__ == "__main__":

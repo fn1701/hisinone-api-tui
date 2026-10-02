@@ -34,7 +34,7 @@ class LinkTreeApp(MessageLog, LinkFilter, App):
         self.settings = settings
         self.page = CurrentPage()
         self.host = ""
-        self.node_paths: dict = {}  # Knoten-ID -> Pfad fuer "collapsed"
+        self.node_paths: dict = {}  # Knoten-ID -> Pfad für "collapsed"
         # Ordner wird erst beim ersten Einschalten angelegt
         self.save_dir: Path | None = None
         if settings.save_on:
@@ -45,7 +45,7 @@ class LinkTreeApp(MessageLog, LinkFilter, App):
         return self.settings.save_path
 
     def open(self, url: str, name: str, push: bool = True, open_col: str = "") -> None:
-        raise NotImplementedError  # in der abgeleiteten Klasse (laedt die Seite)
+        raise NotImplementedError  # in der abgeleiteten Klasse (lädt die Seite)
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -66,13 +66,13 @@ class LinkTreeApp(MessageLog, LinkFilter, App):
         if self.save_dir:
             page.saved = save_html(self.save_dir, page.server_url, page.html, page.name)
         self.page = page
-        # Neue Seite -> Filter zuruecksetzen (sonst sieht man ggf. nichts)
+        # Neue Seite -> Filter zurücksetzen (sonst sieht man ggf. nichts)
         with self.prevent(Input.Changed):
             self.query_one("#filter", Input).value = ""
         self.rebuild()
         self.link_tree.loading = False
-        # Waehrend des Ladens ist der Baum gesperrt und der Fokus wandert ins
-        # Filterfeld - danach zurueck in den Baum, damit Tasten Befehle sind.
+        # Während des Ladens ist der Baum gesperrt und der Fokus wandert ins
+        # Filterfeld - danach zurück in den Baum, damit Tasten Befehle sind.
         self.link_tree.focus()
 
     def fetch_failed(self, message: str) -> None:
@@ -87,7 +87,7 @@ class LinkTreeApp(MessageLog, LinkFilter, App):
         total = len(links)
         try:
             links = match_links(links, text, self.settings.regex)
-        except re.error:  # Ausdruck noch unvollstaendig: Baum so lassen
+        except re.error:  # Ausdruck noch unvollständig: Baum so lassen
             self.query_one(FilterBar).mark_invalid(True)
             return
         self.query_one(FilterBar).mark_invalid(False)
@@ -104,7 +104,7 @@ class LinkTreeApp(MessageLog, LinkFilter, App):
     @on(Tree.NodeCollapsed, "#links")
     @on(Tree.NodeExpanded, "#links")
     def node_toggled(self, event: Tree.NodeCollapsed | Tree.NodeExpanded) -> None:
-        """Auf-/Zuklappen fuer alle Seiten merken (nur Zugeklapptes wird gespeichert)."""
+        """Auf-/Zuklappen für alle Seiten merken (nur Zugeklapptes wird gespeichert)."""
         path = self.node_paths.get(event.node.id)
         if not path or not self.settings.tree:
             return
@@ -119,9 +119,9 @@ class LinkTreeApp(MessageLog, LinkFilter, App):
     def node_selected(self, event: Tree.NodeSelected) -> None:
         link: Link | None = event.node.data
         if link is None:
-            event.node.toggle()  # Gruppen-Ueberschrift
+            event.node.toggle()  # Gruppen-Überschrift
         elif link.needs_confirm:
-            self.notify("Keine stabile URL bzw. Abmelden - mit ! trotzdem oeffnen.",
+            self.notify("Keine stabile URL bzw. Abmelden - mit ! trotzdem öffnen.",
                         severity="warning")  # fmt: skip
         else:
             self.open(link.url, link.label)

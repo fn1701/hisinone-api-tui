@@ -12,16 +12,16 @@ Benutzung (aus dem Projekt-Hauptordner, .env wie bei login_test.py):
     .venv/bin/python leistungen.py --pl -o leistungen.csv   # oder .json
 
 Filter:
-    --pl      nur Pruefungen: Titel endet auf (PL)/(PVL), oder es steht eine
+    --pl      nur Prüfungen: Titel endet auf (PL)/(PVL), oder es steht eine
               Note (Zahl) drin und der Typ ist nicht Modul/Konto (-> PL)
-    --latest  fruehere Versuche ausblenden: Versuche sind Geschwister im Baum
-              (gleicher Elternknoten + gleiche Art); es bleibt der hoechste
+    --latest  frühere Versuche ausblenden: Versuche sind Geschwister im Baum
+              (gleicher Elternknoten + gleiche Art); es bleibt der höchste
 
-Spalten (--cols, Schluessel oder Anzeigename, kommagetrennt):
+Spalten (--cols, Schlüssel oder Anzeigename, kommagetrennt):
     Ebene, Typ, Art, Titel, Nummer, Versuch, Note, CP, Malus, Status, Freigabe,
     Rücktritt, Freiversuch, Vermerk, Vorbehalt, Zusatzmerkmal
 
-Achtung: Ausgabe enthaelt Noten (persoenliche Daten) - nicht committen.
+Achtung: Ausgabe enthält Noten (persönliche Daten) - nicht committen.
 """
 
 import argparse
@@ -39,10 +39,10 @@ from hisinone.noten import HISinOneClient, HISinOneError
 
 
 def _parse_args() -> tuple[argparse.Namespace, list[str]]:
-    """(Argumente, Spalten-Schluessel); ungueltige Angaben beenden das Programm."""
+    """(Argumente, Spalten-Schlüssel); ungültige Angaben beenden das Programm."""
     parser = argparse.ArgumentParser(description="HISinOne-Leistungen abrufen und filtern.")
     parser.add_argument("--pl", action="store_true", help="nur PL/PVL (flache Liste)")
-    parser.add_argument("--latest", action="store_true", help="fruehere Versuche ausblenden")
+    parser.add_argument("--latest", action="store_true", help="frühere Versuche ausblenden")
     parser.add_argument("--cols", help="Spalten, kommagetrennt (Standard: %(default)s)",
                         default=",".join(DEFAULT_COLS))  # fmt: skip
     parser.add_argument("-o", "--output", metavar="DATEI", help="nach .json oder .csv exportieren")

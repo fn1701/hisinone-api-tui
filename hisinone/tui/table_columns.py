@@ -1,4 +1,4 @@
-"""Spaltenauswahl (k), eigene Spalten (x), letzter Versuch (v), fuer den
+"""Spaltenauswahl (k), eigene Spalten (x), letzter Versuch (v), für den
 Vollbild-Tabellenbildschirm."""
 
 from rich.text import Text

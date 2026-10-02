@@ -1,4 +1,4 @@
-"""Pruefungsart (PL/PVL) und Versuche erkennen."""
+"""Prüfungsart (PL/PVL) und Versuche erkennen."""
 
 import re
 
@@ -9,7 +9,7 @@ GRADE_NUMBER = re.compile(r"\d+(?:[.,]\d+)?")
 
 def exam_kind(title: str, kind_icon: str, grade: str) -> str:
     """ "PL"/"PVL" laut Titel-Endung; sonst "PL", wenn eine Note (Zahl) drin
-    steht - ausser bei Modul/Konto (die tragen nur zusammengefasste Noten)."""
+    steht - außer bei Modul/Konto (die tragen nur zusammengefasste Noten)."""
     match = re.search(r"\((PVL|PL)\)\s*$", title)
     if match:
         return match.group(1)
@@ -19,11 +19,11 @@ def exam_kind(title: str, kind_icon: str, grade: str) -> str:
 
 
 def earlier_attempts(items: list[tuple[str, str, str]]) -> set[int]:
-    """Indizes frueherer Versuche; items = [(Ebene, Art, Versuch)] je Zeile.
+    """Indizes früherer Versuche; items = [(Ebene, Art, Versuch)] je Zeile.
     Versuche sind Geschwister im Baum (gleicher Elternknoten, gleiche Art);
-    je Gruppe bleibt der hoechste. Kommt eine Versuchsnummer doppelt vor,
-    sind es verschiedene Pruefungen -> Gruppe bleibt komplett. Nur Zeilen
-    mit Art zaehlen."""
+    je Gruppe bleibt der höchste. Kommt eine Versuchsnummer doppelt vor,
+    sind es verschiedene Prüfungen -> Gruppe bleibt komplett. Nur Zeilen
+    mit Art zählen."""
     groups: dict[tuple[str, str], list[int]] = {}
     for index, (level, kind, _) in enumerate(items):
         if kind:
@@ -42,7 +42,7 @@ def _attempt_number(text: str) -> int:
 
 
 def latest_attempts_tree(rows: list[Row]) -> list[Row]:
-    """Fruehere Versuche ausblenden, fuer Zeilen aus parse_tree_tables
+    """Frühere Versuche ausblenden, für Zeilen aus parse_tree_tables
     (Spalten Ebene/Art/Versuch)."""
     items = [(row.get("Ebene", ""), row.get("Art", ""), row.get("Versuch", "")) for row in rows]
     drop = earlier_attempts(items)

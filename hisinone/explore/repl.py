@@ -20,7 +20,7 @@ HELP = "Unbekannter Befehl (Nr, !Nr, a, t, b, r, h, c [Nr], l, /text, u <url>, s
 
 
 class ExplorerRepl:
-    """Zeigt die Links der aktuellen Seite und fuehrt einen Befehl aus."""
+    """Zeigt die Links der aktuellen Seite und führt einen Befehl aus."""
 
     def __init__(self, browser: PageBrowser, sort: bool, tree: bool):
         self.browser = browser
@@ -117,7 +117,7 @@ class ExplorerRepl:
             return
         link = self.entries[number - 1].link
         if link is None:
-            print("Das ist eine Gruppen-Ueberschrift, kein Link.")
+            print("Das ist eine Gruppen-Überschrift, kein Link.")
         elif link.flow_bound and not command.startswith("!"):
             print(f"'{link.label}' ist flow-gebunden (_flowExecutionKey, keine stabile URL)."
                   f"\nTrotzdem folgen mit !{command}")  # fmt: skip

@@ -1,6 +1,6 @@
 """Ansichten einer Tabelle (t): aufklappbare Tabelle, Baum, flache Liste.
-Baum und Liste zeigen die uebrigen Spalten der markierten Zeile unten in
-der Seitenleiste; Filter, Auf-/Zu-Zustand und Zeilenaktionen gelten fuer
+Baum und Liste zeigen die übrigen Spalten der markierten Zeile unten in
+der Seitenleiste; Filter, Auf-/Zu-Zustand und Zeilenaktionen gelten für
 alle Ansichten gleich."""
 
 from urllib.parse import urljoin
@@ -25,11 +25,11 @@ VIEWS_CSS = """
 
 
 class TableViews:
-    """Mixin fuer SingleTableScreen (nutzt state, shown, table, refresh_table)."""
+    """Mixin für SingleTableScreen (nutzt state, shown, table, refresh_table)."""
 
     @property
     def view(self) -> str:
-        """Gewaehlte Ansicht, sonst Standard aus den Einstellungen (--flat)."""
+        """Gewählte Ansicht, sonst Standard aus den Einstellungen (--flat)."""
         return self.state.view or ("table" if self.app.settings.tree else "flat")
 
     def action_toggle_view(self) -> None:
@@ -48,7 +48,7 @@ class TableViews:
             self.query_one(RowTree).fill(self.shown, self.table.title_col, folded)
             self.query_one("#sidehelp", Static).update(
                 f"{VIEW_NAMES[self.view]} (t wechselt)\n"
-                "g: Seite oeffnen · o: im Browser\nLeertaste/+/-: auf/zu"
+                "g: Seite öffnen · o: im Browser\nLeertaste/+/-: auf/zu"
             )
             self._show_details(self.current_row())
 
@@ -99,7 +99,7 @@ class TableViews:
         self._node_toggled(event.node)
 
     def _node_toggled(self, node: TreeNode) -> None:
-        """Auf-/Zuklappen im Baum in den gemeinsamen Zustand uebernehmen."""
+        """Auf-/Zuklappen im Baum in den gemeinsamen Zustand übernehmen."""
         index = node.data
         if self.view != "tree" or index is None or not 0 <= index < len(self.shown):
             return

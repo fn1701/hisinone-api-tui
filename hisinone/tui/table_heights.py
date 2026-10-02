@@ -1,10 +1,10 @@
 """Alle Tabellen auf einen Bildschirm verteilen.
 
-Kleine (<= MIN_ROWS Zeilen) bekommen ihre volle Hoehe, groessere teilen sich
+Kleine (<= MIN_ROWS Zeilen) bekommen ihre volle Höhe, größere teilen sich
 den Rest, mindestens MIN_ROWS Zeilen + Kopf + ggf. waagrechter Scrollbalken,
-mit eigenem Scrollbalken. Die aeussere Scrollleiste erscheint nur, wenn das
-Terminal dafuer zu niedrig ist. (Berechnet statt "1fr" - das loest sich in
-einem Scroll-Container nicht zuverlaessig auf.)
+mit eigenem Scrollbalken. Die äußere Scrollleiste erscheint nur, wenn das
+Terminal dafür zu niedrig ist. (Berechnet statt "1fr" - das löst sich in
+einem Scroll-Container nicht zuverlässig auf.)
 """
 
 from textual.containers import VerticalScroll
@@ -16,7 +16,7 @@ from .table_widgets import MIN_ROWS
 
 def fit_tables(screen: Screen) -> None:
     widgets = list(screen.query(DataTable))
-    # abzueglich der Leerzeilen zwischen den Tabellen
+    # abzüglich der Leerzeilen zwischen den Tabellen
     available = screen.query_one(VerticalScroll).scrollable_content_region.height
     available -= len(widgets) - 1
     small = [widget for widget in widgets if not widget.has_class("big")]
@@ -29,8 +29,8 @@ def fit_tables(screen: Screen) -> None:
 
 
 def _share_height(widgets: list[DataTable], available: int) -> None:
-    """Gleichmaessig teilen, aber keine hoeher als ihr Inhalt (Zeilen + Kopf +
-    Scrollbalken); ueberschuessiger Platz geht an die uebrigen."""
+    """Gleichmäßig teilen, aber keine höher als ihr Inhalt (Zeilen + Kopf +
+    Scrollbalken); überschüssiger Platz geht an die übrigen."""
     rest = {widget: widget.row_count + 2 for widget in widgets}
     while rest:
         share = available // len(rest) - 1

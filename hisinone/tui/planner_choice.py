@@ -1,4 +1,4 @@
-"""Was im Studienplaner gewaehlt ist: Studiengang und Filterwerte."""
+"""Was im Studienplaner gewählt ist: Studiengang und Filterwerte."""
 
 from dataclasses import dataclass, field
 
@@ -8,7 +8,7 @@ from hisinone.explore.planner_filter import filter_key
 
 @dataclass
 class PlannerChoice:
-    """Studiengang ueber seinen Namen (die Link-ids haengen an der Seite)."""
+    """Studiengang über seinen Namen (die Link-ids hängen an der Seite)."""
 
     course: str = ""  # "" = der erste der Seite
     filters: dict[str, str] = field(default_factory=dict)

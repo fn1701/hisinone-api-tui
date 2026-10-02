@@ -1,5 +1,5 @@
 """Tabellenzeilen als Baum bzw. flache Liste (Tree-Widget) und die
-Seitenleiste mit den uebrigen Spalten der markierten Zeile."""
+Seitenleiste mit den übrigen Spalten der markierten Zeile."""
 
 from rich.text import Text
 from textual.widgets import Tree
@@ -20,7 +20,7 @@ def row_title(row: Row, title_col: str) -> Text:
 
 
 def row_details(row: Row | None, cols: list[str], title_col: str, url: str) -> Text:
-    """Uebrige Spalten "Spalte: Wert", darunter der Link (url = absolut)."""
+    """Übrige Spalten "Spalte: Wert", darunter der Link (url = absolut)."""
     text = Text()
     if row is None:
         return text

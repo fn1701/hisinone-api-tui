@@ -1,8 +1,8 @@
 """Gelernte Seiten mit Baum-Tabelle (Config "pages") als Datenklassen.
 
 Die Entscheidungen werden beim ersten Besuch erkannt und eingetragen, danach
-gilt, was in der Config steht (Benutzer kann sie dort oder per Taste aendern):
-    view        "table" = Tabellen-Ansicht, "tree" = nur Links (Navigationsbaeume)
+gilt, was in der Config steht (Benutzer kann sie dort oder per Taste ändern):
+    view        "table" = Tabellen-Ansicht, "tree" = nur Links (Navigationsbäume)
     expand      einmal "Alle aufklappen" klicken (nur wenn es genau einen gibt)
     open_table  diese Tabelle (Name oder Spalte) gleich im Vollbild, "" = alle zeigen
 """
@@ -21,7 +21,7 @@ def _typed(data: dict, key: str, kind: type, default):
 
 
 def _table_view(data: dict) -> str:
-    """Ansicht einer Tabelle; aeltere Config hatte nur "flat": true."""
+    """Ansicht einer Tabelle; ältere Config hatte nur "flat": true."""
     view = _typed(data, "view", str, "")
     if view not in TABLE_VIEWS:
         view = "flat" if data.get("flat") is True else ""
@@ -80,7 +80,7 @@ class PageConfig:
                 "tables": {key: prefs.to_dict() for key, prefs in self.tables.items()}}  # fmt: skip
 
     def learn(self, name: str, view: str, expand: bool) -> None:
-        """Erkannte Werte nur eintragen, wo noch nichts (Gueltiges) steht -
+        """Erkannte Werte nur eintragen, wo noch nichts (Gültiges) steht -
         Benutzer-Einstellungen gehen vor."""
         self.name = self.name or name
         self.view = self.view or view

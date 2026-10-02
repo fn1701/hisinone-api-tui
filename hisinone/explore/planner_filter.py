@@ -17,13 +17,13 @@ SELECT = re.compile(r"<select\b[^>]*>.*?</select>", re.S)
 OPTION = re.compile(r"<option\b([^>]*)>([^<]*)", re.S)
 RADIO = re.compile(r'<input\b[^>]*type="radio"[^>]*>')
 LABEL = re.compile(r"label_top_position_marked[^>]*>\s*([^<]+)")
-# Uebernehmen-Button der Seitenleiste (oben und unten gleich)
+# Übernehmen-Button der Seitenleiste (oben und unten gleich)
 APPLY = re.compile(r'<button\b[^>]*\bid="([^"]*hideSidebar)"')
 
 
 @dataclass
 class FilterField:
-    """Ein Filter: Formularfeld, Beschriftung, (Wert, Text)-Paare, gewaehlter Wert."""
+    """Ein Filter: Formularfeld, Beschriftung, (Wert, Text)-Paare, gewählter Wert."""
 
     name: str
     label: str
@@ -32,7 +32,7 @@ class FilterField:
 
     @property
     def current(self) -> str:
-        """Was der Browser zeigt: der gewaehlte Wert, sonst die erste Option."""
+        """Was der Browser zeigt: der gewählte Wert, sonst die erste Option."""
         values = [value for value, _ in self.options]
         return self.selected if self.selected in values else values[0]
 
@@ -108,5 +108,5 @@ def _label_before(form_html: str, position: int) -> str:
 
 
 def filter_key(values: dict[str, str]) -> str:
-    """Teil des Cache-Schluessels: gleiche Filter = gleiche Tabelle."""
+    """Teil des Cache-Schlüssels: gleiche Filter = gleiche Tabelle."""
     return "&".join(f"{name}={value}" for name, value in sorted(values.items()))

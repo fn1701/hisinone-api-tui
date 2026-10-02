@@ -1,8 +1,8 @@
-"""Kuerzel-Legenden des Notenspiegels (fuer beispiel.py)."""
+"""Kürzel-Legenden des Notenspiegels (für beispiel.py)."""
 
-# Vollstaendige Legende der Kuerzel (aus den "Erlaeuterungen" im Notenspiegel).
-# Dient als Fallback - die API liefert unter daten["legende"] die tatsaechlich
-# auf der Seite gefundenen Kuerzel ohnehin dynamisch mit.
+# Vollständige Legende der Kürzel (aus den "Erläuterungen" im Notenspiegel).
+# Dient als Fallback - die API liefert unter daten["legende"] die tatsächlich
+# auf der Seite gefundenen Kürzel ohnehin dynamisch mit.
 STATUS_LEGENDE = {
     "AN": "angemeldet",
     "BE": "bestanden",

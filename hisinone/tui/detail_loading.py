@@ -1,5 +1,5 @@
-"""Detailseiten in der App: aus einer Tabellenzeile ueber der Tabelle
-oeffnen (Esc fuehrt zurueck) und ihre Registerkarten laden. Immer erst aus
+"""Detailseiten in der App: aus einer Tabellenzeile über der Tabelle
+öffnen (Esc führt zurück) und ihre Registerkarten laden. Immer erst aus
 dem Cache (je Registerkarte ein Eintrag), sonst Seite frisch holen und den
 Knopf der Registerkarte absenden."""
 
@@ -20,15 +20,15 @@ from .detail_screen import DetailScreen
 
 
 class DetailLoading:
-    """Mixin fuer LoadingApp (nutzt session, client, store, _get, open_as_page)."""
+    """Mixin für LoadingApp (nutzt session, client, store, _get, open_as_page)."""
 
     def open_from_table(self, href: str, name: str) -> None:
-        """Link einer Tabellenzeile (relativ zur aktuellen Seite) oeffnen."""
+        """Link einer Tabellenzeile (relativ zur aktuellen Seite) öffnen."""
         self._open_linked(urljoin(self.page.server_url, href), name)
 
     @work(thread=True, exclusive=True)
     def _open_linked(self, url: str, name: str) -> None:
-        """Detailseite ueber der Tabelle zeigen, andere Seiten wie bisher."""
+        """Detailseite über der Tabelle zeigen, andere Seiten wie bisher."""
         cached = self.store.get(clean_url(url), "")
         page = cached[0] if cached else self._fetch_linked(url, name)
         if page is None:
@@ -58,7 +58,7 @@ class DetailLoading:
         self.call_from_thread(screen.show_page, loaded)
 
     def _fetch_tab(self, page: CurrentPage, tab: DetailTab, key: str) -> CurrentPage | None:
-        """Frische Seite (gueltiger ViewState), dann Registerkarte absenden."""
+        """Frische Seite (gültiger ViewState), dann Registerkarte absenden."""
         fresh = self._get(base_url(page.stable_url))
         if fresh is None:
             return None

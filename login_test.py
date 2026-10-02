@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-Prueft nur den Login ins moderne HISinOne (Zugangsdaten aus .env).
+Prüft nur den Login ins moderne HISinOne (Zugangsdaten aus .env).
 
 Benutzung
 ---------
-1. Abhaengigkeit installieren:
+1. Abhängigkeit installieren:
        pip install -r requirements.txt
 2. .env anlegen (im Projekt-Hauptordner, neben diesem Skript):
        cp .env.example .env
-   und HISINONE_USERNAME / HISINONE_PASSWORD eintragen. Fuer eine andere
-   Hochschule als die HS Hannover zusaetzlich HISINONE_BASE_URL anpassen.
+   und HISINONE_USERNAME / HISINONE_PASSWORD eintragen. Für eine andere
+   Hochschule als die HS Hannover zusätzlich HISINONE_BASE_URL anpassen.
 3. Aus dem Projekt-Hauptordner starten:
        python login_test.py
 

@@ -39,7 +39,7 @@ def link_details(link: Link | None, host: str) -> Text:
 
 
 class LinkTreeFiller:
-    """Fuellt den Baum aus TreeEntry-Zeilen. Jeder Knoten bekommt einen Pfad
+    """Füllt den Baum aus TreeEntry-Zeilen. Jeder Knoten bekommt einen Pfad
     aus Beschriftungen ("Eltern › Kind"), unter dem sein Zuklappen gemerkt wird."""
 
     def __init__(self, tree: Tree, host: str, collapsed: set[str]):
@@ -48,7 +48,7 @@ class LinkTreeFiller:
 
     def fill(self, entries: list[TreeEntry]) -> dict:
         self.tree.clear()
-        # Tiefe -> Elternknoten: jeder Eintrag haengt am letzten flacheren Knoten
+        # Tiefe -> Elternknoten: jeder Eintrag hängt am letzten flacheren Knoten
         stack: list[tuple[int, TreeNode, str]] = [(-1, self.tree.root, "")]
         for entry in entries:
             while stack[-1][0] >= entry.depth:
@@ -68,7 +68,7 @@ class LinkTreeFiller:
         expand = path not in self.collapsed
         if link:
             node = parent.add(link_label(link, self.host), data=link, expand=expand)
-        else:  # Gruppen-Ueberschrift
+        else:  # Gruppen-Überschrift
             node = parent.add(Text(plain, style="bold"), expand=expand)
         self.node_paths[node.id] = path
         return node, path

@@ -1,4 +1,4 @@
-"""Tasten, die eine feste Seite oeffnen (Config "shortcuts")."""
+"""Tasten, die eine feste Seite öffnen (Config "shortcuts")."""
 
 from dataclasses import asdict, dataclass
 

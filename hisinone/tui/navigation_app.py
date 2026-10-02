@@ -28,8 +28,8 @@ class NavigationApp(LoadingApp):
             self.open(node.data.url, node.data.label)
 
     def open_as_page(self, url: str, name: str) -> None:
-        """Link aus einer Tabellenzeile als neue Seite oeffnen; die Tabellen-
-        Bildschirme schliessen, sonst laege die Seite darunter."""
+        """Link aus einer Tabellenzeile als neue Seite öffnen; die Tabellen-
+        Bildschirme schließen, sonst läge die Seite darunter."""
         while len(self.screen_stack) > 1:
             self.pop_screen()
         self.open(url, name)
