@@ -5,6 +5,8 @@ p lädt die Seiten aller sichtbaren Zeilen in den Cache (TablePrefetch)."""
 
 from textual.widgets import Tree
 
+from hisinone.explore.subtree_merge import has_child_rows
+
 from .row_tree import RowTree
 from .subtree_loading import SubtreeLoading
 from .table_prefetch import TablePrefetch
@@ -20,7 +22,7 @@ class TableLinks(SubtreeLoading, TablePrefetch):
             self.action_toggle_node()
             return
         row = self.current_row()
-        if row and row.get("subtree_url"):
+        if row and row.get("subtree_url") and not has_child_rows(self.table, row):
             self.load_subtree(row)
         elif row and row.get("url"):
             self.app.open_from_table(row["url"], str(row.get(self.table.title_col, "")))
