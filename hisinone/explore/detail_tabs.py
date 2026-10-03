@@ -9,7 +9,7 @@ from urllib.parse import urljoin
 import requests
 
 from .html_text import attribute
-from .jsf import find_form, hidden_fields
+from .jsf import find_form, hidden_fields, selected_options
 from .pacer import pacer
 
 FORM_ID = "detailViewData"
@@ -48,11 +48,15 @@ def click_tab(
     """Sendet das Formular wie submitForm (Knopf als _idcl und Parameter
     DISABLE_VALIDATION); html muss frisch sein (gültiger ViewState)."""
     action, form_html = find_form(html, FORM_ID)
-    data = hidden_fields(form_html) | {
-        f"{FORM_ID}:_idcl": tab.button_id,
-        tab.button_id: tab.name,
-        "DISABLE_VALIDATION": "true",
-    }
+    data = (
+        hidden_fields(form_html)
+        | selected_options(form_html)
+        | {
+            f"{FORM_ID}:_idcl": tab.button_id,
+            tab.button_id: tab.name,
+            "DISABLE_VALIDATION": "true",
+        }
+    )
     pacer.step()
     response = session.post(urljoin(page_url, action), data=data, timeout=timeout,
                             headers={"Referer": page_url})  # fmt: skip

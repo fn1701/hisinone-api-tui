@@ -12,6 +12,8 @@ from .html_text import attribute
 from .pacer import pacer
 
 AJAX_HEADERS = {"Faces-Request": "partial/ajax", "X-Requested-With": "XMLHttpRequest"}
+SELECT = re.compile(r'<select\b[^>]*\bname="([^"]*)"[^>]*>(.*?)</select>', re.S)
+OPTION = re.compile(r"<option\b[^>]*>")
 
 
 def find_form(html: str, form_id: str) -> tuple[str, str]:
@@ -29,6 +31,17 @@ def hidden_fields(form_html: str) -> dict[str, str]:
     for tag in re.findall(r'<input\b[^>]*type="hidden"[^>]*>', form_html):
         if name := attribute(tag, "name"):
             fields.setdefault(name, attribute(tag, "value"))
+    return fields
+
+
+def selected_options(form_html: str) -> dict[str, str]:
+    """Gewählter Wert jeder Auswahlliste (z.B. Semester auf Veranstaltungsseiten);
+    ohne sie verwirft der Server ein abgeschicktes Formular und startet neu."""
+    fields: dict[str, str] = {}
+    for name, options in SELECT.findall(form_html):
+        selected = [tag for tag in OPTION.findall(options) if " selected" in tag]
+        if name and selected:
+            fields[name] = attribute(selected[0], "value")
     return fields
 
 
