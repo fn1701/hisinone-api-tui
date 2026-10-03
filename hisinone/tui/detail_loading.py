@@ -9,6 +9,7 @@ from urllib.parse import urljoin
 import requests
 from textual import work
 
+from hisinone.explore.collapsed_panels import collapsed_panels, open_panels
 from hisinone.explore.detail_tabs import DetailTab, base_url, click_tab, tab_key
 from hisinone.explore.detail_view import has_detail_view
 from hisinone.explore.html_text import link_name, page_title
@@ -42,8 +43,9 @@ class DetailLoading:
         response = self._get(url)
         if response is None:
             return None
-        page = CurrentPage(clean_url(url), link_name(name) or page_title(response.text),
-                           response.url, response.text, pulled_at=time.time())  # fmt: skip
+        name = link_name(name) or page_title(response.text)
+        page = CurrentPage(clean_url(url), name, response.url, self.page_html(response),
+                           pulled_at=time.time())  # fmt: skip
         if has_detail_view(page.html):
             self.store.put(page, [], float("inf"))  # Detailseiten immer cachen
         return page
@@ -71,6 +73,20 @@ class DetailLoading:
             self.call_from_thread(self.notify, "Registerkarte nicht geladen (unerwartete Seite).",
                                   severity="error")  # fmt: skip
             return None
-        loaded = CurrentPage(key, page.name, response.url, response.text, pulled_at=time.time())
+        loaded = CurrentPage(key, page.name, response.url, self.page_html(response),
+                             pulled_at=time.time())  # fmt: skip
         self.store.put(loaded, [], float("inf"))  # Registerkarten immer cachen
         return loaded
+
+    def page_html(self, response: requests.Response) -> str:
+        """HTML der Seite; bei Detailseiten mit geöffneten zugeklappten
+        Abschnitten (sonst fehlt deren Inhalt, z.B. eine Parallelgruppe)."""
+        html = response.text
+        if not has_detail_view(html) or not collapsed_panels(html):
+            return html
+        try:
+            return open_panels(self.session, response.url, html, self.client.timeout)
+        except (HISinOneError, requests.RequestException) as error:
+            self.call_from_thread(self.notify, f"Zugeklappte Abschnitte nicht geladen: {error}",
+                                  severity="warning")  # fmt: skip
+            return html

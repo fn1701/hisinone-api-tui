@@ -65,7 +65,7 @@ class LoadingApp(FirstVisit, SpecialPages, TableDisplay, LinkTreeApp):
         if response is None:
             return
         name = link_name(name) or page_title(response.text)
-        page = CurrentPage(clean_url(url), name, response.url, response.text,
+        page = CurrentPage(clean_url(url), name, response.url, self.page_html(response),
                            pulled_at=time.time())  # fmt: skip
         self.call_from_thread(self.enter_page, page, push)
         tables = self._fetched_tables(page, open_col)
